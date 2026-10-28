@@ -38,6 +38,34 @@ escuro já está preparado para um toggle futuro.
 ## Backend (Passo 2)
 - DrizzleORM configurado com PostgreSQL
 - Schemas Auth.js: User, Account, Session, VerificationToken
-- NextAuth.js v5 configurado em `/auth.ts`
-- Rotas: `/api/auth/[...nextauth]`, `/platform` (protegida)
-- Documentação dos schemas em `schema.md`
+- NextAuth.js v5 configurado em `/auth.ts` (Google, GitHub, Apple opcional e Credentials)
+- Senhas com hash scrypt (`node:crypto`) na coluna `user.password`
+- Rotas: `/api/auth/[...nextauth]`, `/api/auth/check-email`, `/api/auth/register`
+- Páginas: `/login`, `/cadastro`, `/app` (protegida) e `/platform` (redirect)
+- Proteção central em `proxy.ts` + verificação de sessão no layout de `/app`
+- Documentação dos schemas em `specs/schema.md`
+
+### Variáveis de ambiente
+- `DATABASE_URL` — string de conexão PostgreSQL
+- `AUTH_SECRET` — segredo do Auth.js
+- `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — login com Google
+- `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` — login com GitHub
+- `AUTH_APPLE_ID` / `AUTH_APPLE_SECRET` — login com Apple (opcional)
+
+Após alterar o schema, gere e aplique a migração:
+
+```bash
+npx drizzle-kit generate
+npx drizzle-kit migrate
+```
+
+### Usuário de teste
+
+O seed cria (ou atualiza) um usuário com senha para testar o login por credenciais:
+
+```bash
+npm run db:seed
+```
+
+Padrões: `admin@admin.com` / `admin123`. Sobrescreva com
+`SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL` e `SEED_ADMIN_PASSWORD`.

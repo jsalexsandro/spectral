@@ -11,6 +11,7 @@ Using DrizzleORM with NextAuth.js (Auth.js) adapter.
 - `email` (text, unique, nullable)
 - `emailVerified` (timestamp, nullable)
 - `image` (text, nullable)
+- `password` (text, nullable) - Hash scrypt no formato `scrypt:<salt>:<hash>`; nulo para contas apenas sociais
 - `createdAt` (timestamp, not null) - Default: now()
 - `updatedAt` (timestamp, not null) - Default: now()
 

@@ -36,6 +36,17 @@ Design system documentado em `designer.md`.
   
 - [x] Uma rota básica que valida um email na plataforma.  (Aquele email existe?)
 - [x] Na tela de login no campo de email usar essa rota para verificar se o email é valido, se for input de password aparece aquardando a senha
-- [] Implementar autenticação por email e password na tela login 
-- [] "/app" e outras rotas requer auth'
-- [] Quando o user estiver logado "/login" manda para "/app"
+- [x] Implementar autenticação por email e password na tela login 
+- [x] "/app" e outras rotas requer auth'
+- [x] Quando o user estiver logado "/login" manda para "/app"
+
+## Implementação do Passo 2 (credenciais)
+- [x] Coluna `password` no schema `user` (hash scrypt via `node:crypto`)
+- [x] Provider `Credentials` no `auth.ts` validando com Zod
+- [x] Rota `POST /api/auth/register` para criar conta com senha
+- [x] Página `/cadastro` integrada ao registro e login automático
+- [x] Rota protegida `/app` (layout + `proxy.ts` matcher)
+- [x] `/platform` mantida como redirect para `/app`
+- [x] Usuário logado em `/login` ou `/cadastro` é redirecionado para `/app`
+- [x] Seed de usuário de teste (`npm run db:seed` → `admin@admin.com` / `admin123`)
+- [x] Gerar/aplicar migração do Drizzle (`npx drizzle-kit generate` + `npx drizzle-kit migrate`)
