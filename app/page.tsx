@@ -1,69 +1,98 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, Component, Palette, Sparkles, Type } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const foundations = [
+  {
+    icon: Palette,
+    title: "Cores",
+    description: "Branco, off-whites e esmeralda espectral.",
+    href: "/styleguide#cores",
+  },
+  {
+    icon: Type,
+    title: "Tipografia",
+    description: "Geist Sans para interface e Geist Mono para dados.",
+    href: "/styleguide#tipografia",
+  },
+  {
+    icon: Component,
+    title: "Componentes",
+    description: "Primitivos acessíveis construídos com shadcn/ui.",
+    href: "/styleguide#componentes",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="relative flex flex-1 items-center justify-center overflow-hidden px-6 py-16">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[560px] w-[880px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(16,185,129,0.16),transparent)] blur-2xl"
+      />
+
+      <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
+        <Badge
+          variant="outline"
+          className="mb-6 gap-1.5 border-primary/20 bg-primary/5 text-primary"
+        >
+          <Sparkles className="size-3" />
+          Passo 1 · Design system
+        </Badge>
+
+        <div className="mb-6 flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-900/15">
+          <Sparkles className="size-7" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <h1 className="font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
+          Spectral <span className="text-primary">AI</span>
+        </h1>
+
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+          A base visual do seu novo painel de inteligência artificial. Limpa,
+          acessível e pronta para evoluir com o produto.
+        </p>
+
+        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+          <Link
+            href="/styleguide"
+            className={buttonVariants({ size: "lg", className: "px-5" })}
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Explorar design system
+            <ArrowRight data-icon="inline-end" />
+          </Link>
+          <span className="text-sm text-muted-foreground">
+            Dashboard em construção
+          </span>
         </div>
-      </main>
-    </div>
+
+        <div className="mt-14 grid w-full gap-3 sm:grid-cols-3">
+          {foundations.map(({ icon: Icon, title, description, href }) => (
+            <Link
+              key={title}
+              href={href}
+              className={cn(
+                "group rounded-xl border bg-card p-4 text-left shadow-soft",
+                "transition-colors hover:border-primary/30 hover:bg-accent/40",
+              )}
+            >
+              <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Icon className="size-4" />
+              </div>
+              <p className="font-heading text-sm font-medium">{title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {description}
+              </p>
+            </Link>
+          ))}
+        </div>
+
+        <p className="mt-12 text-xs text-muted-foreground">
+          Spectral Emerald · Geist · shadcn/ui
+        </p>
+      </div>
+    </main>
   );
 }
