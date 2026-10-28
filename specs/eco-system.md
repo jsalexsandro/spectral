@@ -23,4 +23,6 @@ Design system documentado em `designer.md`.
 # Passo 2 (autenticação do projeto)
  "/platform" principal pagina do projeto (exige) auth
 - Criar a pagina de login
+- Criar estrutura básica do backend 
+  1. Configurações iniciais do DrizzleORM
  
