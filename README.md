@@ -34,3 +34,10 @@ npm run typecheck
 O tema **Spectral Emerald** usa branco e off-whites esverdeados como base, com
 esmeralda como cor de ação. Os tokens ficam em `app/globals.css`, e o tema
 escuro já está preparado para um toggle futuro.
+
+## Backend (Passo 2)
+- DrizzleORM configurado com PostgreSQL
+- Schemas Auth.js: User, Account, Session, VerificationToken
+- NextAuth.js v5 configurado em `/auth.ts`
+- Rotas: `/api/auth/[...nextauth]`, `/platform` (protegida)
+- Documentação dos schemas em `schema.md`

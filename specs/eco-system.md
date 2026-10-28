@@ -22,7 +22,13 @@ Design system documentado em `designer.md`.
 
 # Passo 2 (autenticação do projeto)
  "/platform" principal pagina do projeto (exige) auth
-- Criar a pagina de login
-- Criar estrutura básica do backend 
-  1. Configurações iniciais do DrizzleORM
- 
+- [x] Criar a pagina de login
+- [x] Criar estrutura básica do backend 
+- [x] instalar drizzle, next-auth e zod (validação)
+
+  1. [x] Configurações iniciais do DrizzleORM
+  2. [x] Criar pasta db, ./index.ts pra conection
+  3. [x] db/schema/index.ts 
+  4. [x] definir o schema basico (definir junto com o programador), salvar a reference em schema.md
+  5. [x] sobre os schemas, User e Account (login social)
+  6. [x] criar o auth.ts no root (jwt-model)
