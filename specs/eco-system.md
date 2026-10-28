@@ -45,8 +45,5 @@ Design system documentado em `designer.md`.
 - [x] Provider `Credentials` no `auth.ts` validando com Zod
 - [x] Rota `POST /api/auth/register` para criar conta com senha
 - [x] Página `/cadastro` integrada ao registro e login automático
-- [x] Rota protegida `/app` (layout + `proxy.ts` matcher)
-- [x] `/platform` mantida como redirect para `/app`
+- [x] Rota protegida `/app` (layout + `proxy.ts` matcher)`
 - [x] Usuário logado em `/login` ou `/cadastro` é redirecionado para `/app`
-- [x] Seed de usuário de teste (`npm run db:seed` → `admin@admin.com` / `admin123`)
-- [x] Gerar/aplicar migração do Drizzle (`npx drizzle-kit generate` + `npx drizzle-kit migrate`)
