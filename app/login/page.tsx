@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Link from "next/link"
-import { ArrowRight, Envelope, Check } from "phosphor-react"
+import { ArrowRight, Envelope, Check, CircleNotch, WarningCircle } from "phosphor-react"
 import { FcGoogle } from "react-icons/fc"
 import { FaGithub, FaApple } from "react-icons/fa"
 import { Button } from "@/components/ui/button"
@@ -11,20 +11,68 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_CHECK_DEBOUNCE_MS = 500
+
+type EmailStatus = "idle" | "invalid" | "checking" | "exists" | "not_found" | "error"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [password, setPassword] = useState("")
+  const [emailStatus, setEmailStatus] = useState<EmailStatus>("idle")
 
-  const emailValid = EMAIL_REGEX.test(email)
+  const showPassword = emailStatus === "exists"
+  const canSubmit = emailStatus === "exists" && password.length >= 6
 
   const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value)
-    if (EMAIL_REGEX.test(e.target.value) && !showPassword) {
-      setShowPassword(true)
+    const value = e.target.value
+
+    setEmail(value)
+    setPassword("")
+
+    if (!value.trim()) {
+      setEmailStatus("idle")
+      return
     }
-  }, [showPassword])
+
+    setEmailStatus(EMAIL_REGEX.test(value.trim()) ? "checking" : "invalid")
+  }, [])
+
+  useEffect(() => {
+    const normalizedEmail = email.trim().toLowerCase()
+
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return
+    }
+
+    const controller = new AbortController()
+
+    const timeout = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/auth/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: normalizedEmail }),
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          throw new Error(`Email check failed with status ${response.status}`)
+        }
+
+        const data = (await response.json()) as { exists?: boolean }
+        setEmailStatus(data.exists ? "exists" : "not_found")
+      } catch {
+        if (!controller.signal.aborted) {
+          setEmailStatus("error")
+        }
+      }
+    }, EMAIL_CHECK_DEBOUNCE_MS)
+
+    return () => {
+      controller.abort()
+      clearTimeout(timeout)
+    }
+  }, [email])
 
   return (
     <main className="w-full h-screen flex min-h-full flex-col items-center justify-center bg-background px-6 py-12">
@@ -88,7 +136,12 @@ export default function LoginPage() {
             <div className="relative group">
               <Envelope
                 className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 transition-colors duration-300"
-                style={{ color: emailValid ? "oklch(0.508 0.118 165.612)" : "oklch(0.48 0.02 165)" }}
+                style={{
+                  color:
+                    emailStatus === "exists"
+                      ? "oklch(0.508 0.118 165.612)"
+                      : "oklch(0.48 0.02 165)",
+                }}
               />
               <Input
                 id="email"
@@ -96,24 +149,64 @@ export default function LoginPage() {
                 value={email}
                 onChange={handleEmailChange}
                 placeholder="voce@empresa.com"
+                autoComplete="email"
+                aria-invalid={emailStatus === "invalid"}
+                aria-describedby="email-status"
                 className={cn(
                   "h-12 pl-11 pr-10 transition-all duration-300",
-                  emailValid
+                  emailStatus === "exists"
                     ? "border-primary ring-3 ring-primary/20 bg-primary/5"
                     : "border-border",
-                  email && !emailValid ? "text-destructive" : "",
+                  emailStatus === "invalid" ? "text-destructive" : "",
                 )}
               />
-              {emailValid && (
+              {emailStatus === "checking" && (
+                <CircleNotch className="pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2 animate-spin text-muted-foreground" />
+              )}
+              {emailStatus === "exists" && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 size-5 text-primary animate-check-in">
                   <Check size={20} strokeWidth={2.5} />
                 </div>
               )}
+              {(emailStatus === "not_found" || emailStatus === "error") && (
+                <WarningCircle
+                  className={cn(
+                    "pointer-events-none absolute right-3 top-1/2 size-5 -translate-y-1/2",
+                    emailStatus === "error"
+                      ? "text-destructive"
+                      : "text-muted-foreground",
+                  )}
+                />
+              )}
             </div>
-            {email && !emailValid && (
-              <p className="text-xs text-destructive animate-shake">
-                Informe um e-mail válido.
-              </p>
+            {emailStatus !== "idle" && (
+              <div id="email-status" role="status" aria-live="polite">
+                {emailStatus === "invalid" && (
+                  <p className="text-xs text-destructive animate-shake">
+                    Informe um e-mail válido.
+                  </p>
+                )}
+                {emailStatus === "checking" && (
+                  <p className="text-xs text-muted-foreground">
+                    Verificando e-mail...
+                  </p>
+                )}
+                {emailStatus === "exists" && (
+                  <p className="text-xs text-primary">
+                    E-mail verificado. Informe sua senha.
+                  </p>
+                )}
+                {emailStatus === "not_found" && (
+                  <p className="text-xs text-muted-foreground">
+                    E-mail não encontrado.
+                  </p>
+                )}
+                {emailStatus === "error" && (
+                  <p className="text-xs text-destructive">
+                    Não foi possível verificar o e-mail. Tente novamente.
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -130,6 +223,8 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete="current-password"
+                  minLength={6}
                   className={cn(
                     "h-12 pl-10 transition-all duration-300 border-primary ring-3 ring-primary/20 bg-primary/5 focus:ring-primary/20",
                   )}
@@ -147,11 +242,11 @@ export default function LoginPage() {
             size="lg"
             className={cn(
               "w-full h-12 transition-all duration-300",
-              emailValid && showPassword
+              canSubmit
                 ? "bg-primary text-primary-foreground hover:bg-primary/80 shadow-lg shadow-emerald-900/20"
                 : "bg-muted/50 text-muted-foreground opacity-60 cursor-not-allowed",
             )}
-            disabled={!emailValid || !showPassword || !password}
+            disabled={!canSubmit}
           >
             Continuar
             <ArrowRight className="ml-2 size-4 data-icon=[inline-end]:animate-slide-right" />

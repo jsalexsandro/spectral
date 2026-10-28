@@ -21,8 +21,8 @@ Design system documentado em `designer.md`.
 
 
 # Passo 2 (autenticação do projeto)
- "/platform" principal pagina do projeto (exige) auth
-- [x] Criar a pagina de login
+ "/app" principal pagina do projeto (exige) auth
+- [x] Criar a pagina de login (front)
 - [x] Criar estrutura básica do backend 
 - [x] instalar drizzle, next-auth e zod (validação)
 
@@ -32,3 +32,10 @@ Design system documentado em `designer.md`.
   4. [x] definir o schema basico (definir junto com o programador), salvar a reference em schema.md
   5. [x] sobre os schemas, User e Account (login social)
   6. [x] criar o auth.ts no root (jwt-model)
+  7. [x] Criar as rotas basicas/necessarias das api com o next-js
+  
+- [x] Uma rota básica que valida um email na plataforma.  (Aquele email existe?)
+- [x] Na tela de login no campo de email usar essa rota para verificar se o email é valido, se for input de password aparece aquardando a senha
+- [] Implementar autenticação por email e password na tela login 
+- [] "/app" e outras rotas requer auth'
+- [] Quando o user estiver logado "/login" manda para "/app"
