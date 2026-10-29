@@ -7,13 +7,16 @@ Using DrizzleORM with NextAuth.js (Auth.js) adapter.
 
 ### user
 - `id` (text, PK) - CUID gerado automaticamente via @paralleldrive/cuid2
-- `name` (text, nullable)
-- `email` (text, unique, nullable)
+- `name` (text, nullable) - Nome exibido; editável (2–80 caracteres) em Configurações → Conta
+- `nickname` (text, nullable) - Apelido opcional (até 40 caracteres); editável em Configurações → Conta. Vazio é salvo como `null`
+- `email` (text, unique, nullable) - Somente leitura após o cadastro
 - `emailVerified` (timestamp, nullable)
 - `image` (text, nullable)
 - `password` (text, nullable) - Hash scrypt no formato `scrypt:<salt>:<hash>`; nulo para contas apenas sociais
 - `createdAt` (timestamp, not null) - Default: now()
-- `updatedAt` (timestamp, not null) - Default: now()
+- `updatedAt` (timestamp, not null) - Default: now(); atualizado em cada alteração de perfil (`PATCH /api/user`)
+
+> Alterações de perfil (nome/apelido) são persistidas via `PATCH /api/user` e refletidas na sessão JWT.
 
 ### account
 Armazena contas vinculadas para login social (Google, GitHub, Apple, etc.).
@@ -32,9 +35,33 @@ Armazena contas vinculadas para login social (Google, GitHub, Apple, etc.).
 - `userId` (text, FK -> user.id, cascade delete)
 - `expires` (timestamp, not null)
 
+### AIKey
+Chaves de API dos provedores de IA por usuário (BYOK). O valor em `apiKey` é armazenado criptografado (AES-256-GCM).
+- `id` (text, PK) - CUID gerado automaticamente
+- `userId` (text, FK -> user.id, cascade delete) - Indexado
+- `provider` (text) - Identificador do provedor: `openai`, `anthropic` ou `google`
+- `apiKey` (text, not null) - Chave criptografada no formato `v1:<iv>:<tag>:<ciphertext>` (base64)
+- `createdAt` (timestamp, not null) - Default: now()
+- `updatedAt` (timestamp, not null) - Default: now(); atualizado em cada upsert
+- Unique index: (userId, provider)
+
+> A chave nunca é retornada pela API; a listagem expõe apenas o status e os 4 últimos caracteres, calculados no servidor.
+
 ### verificationToken
 Para verificação de email/magic links.
 - `identifier` (text)
 - `token` (text)
 - `expires` (timestamp, not null)
 - Unique index: (identifier, token)
+
+## Migrations
+
+- `0000_jazzy_fenris` — tabelas iniciais do Auth.js (`user`, `account`, `session`, `verificationToken`) e coluna `password`.
+- `0001_add_nickname` — adiciona a coluna `nickname` em `user`.
+- `0002_ai_key` — cria a tabela `AIKey` (chaves BYOK por usuário).
+
+Aplicar com:
+
+```bash
+npx drizzle-kit migrate
+```

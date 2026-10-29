@@ -1,17 +1,30 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { signOut, useSession } from "next-auth/react"
 import {
   Check,
-  Copy,
   KeyRound,
+  Loader2,
+  LogOut,
   Monitor,
   Moon,
-  RefreshCw,
   Settings,
   Sun,
+  Trash2,
   User,
 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,14 +37,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useTheme, type Theme } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
+import { ByokSection } from "./byok-section"
 
-type ConfigSection = "general" | "account" | "api-key"
+type ConfigSection = "general" | "account" | "byok"
 
 type ConfigUser = {
   name?: string | null
+  nickname?: string | null
   email?: string | null
   image?: string | null
 }
+
+type SaveStatus = "idle" | "saving" | "saved" | "error"
 
 type ConfigComponentProps = {
   open: boolean
@@ -46,7 +63,7 @@ const sections: {
 }[] = [
   { id: "general", label: "Geral", icon: Settings },
   { id: "account", label: "Conta", icon: User },
-  { id: "api-key", label: "Chave de API", icon: KeyRound },
+  { id: "byok", label: "BYOK", icon: KeyRound },
 ]
 
 const themeOptions: {
@@ -76,35 +93,12 @@ export function ConfigComponent({
   user,
 }: ConfigComponentProps) {
   const [section, setSection] = useState<ConfigSection>("general")
-  const [apiKey, setApiKey] = useState("")
-  const [copied, setCopied] = useState(false)
-
-  const displayName = user.name?.trim() || user.email || "Usuário"
 
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen)
 
     if (!nextOpen) {
       setSection("general")
-      setCopied(false)
-    }
-  }
-
-  function generateApiKey() {
-    setApiKey(`sk_spectral_${crypto.randomUUID().replace(/-/g, "")}`)
-    setCopied(false)
-  }
-
-  async function copyApiKey() {
-    if (!apiKey) {
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(apiKey)
-      setCopied(true)
-    } catch {
-      setCopied(false)
     }
   }
 
@@ -113,7 +107,7 @@ export function ConfigComponent({
       <DialogContent padded={false} className="max-w-2xl">
         <DialogTitle className="sr-only">Configurações</DialogTitle>
         <DialogDescription className="sr-only">
-          Aparência, conta e chave de API.
+          Aparência, conta e provedores de IA.
         </DialogDescription>
 
         <div className="grid sm:grid-cols-[200px_1fr]">
@@ -144,17 +138,8 @@ export function ConfigComponent({
 
           <section className="min-h-[320px] p-6">
             {section === "general" && <GeneralSection />}
-            {section === "account" && (
-              <AccountSection user={user} displayName={displayName} />
-            )}
-            {section === "api-key" && (
-              <ApiKeySection
-                apiKey={apiKey}
-                copied={copied}
-                onGenerate={generateApiKey}
-                onCopy={copyApiKey}
-              />
-            )}
+            {section === "account" && <AccountSection user={user} />}
+            {section === "byok" && <ByokSection />}
           </section>
         </div>
       </DialogContent>
@@ -174,7 +159,7 @@ function GeneralSection() {
         </p>
       </header>
 
-      <div className="space-y-3">
+      <div className="flex items-center justify-between gap-4">
         <div className="space-y-1">
           <p className="text-sm font-medium">Tema</p>
           <p className="text-xs text-muted-foreground">
@@ -185,23 +170,25 @@ function GeneralSection() {
         <div
           role="group"
           aria-label="Tema"
-          className="grid grid-cols-3 gap-2"
+          className="flex shrink-0 overflow-hidden rounded-lg border border-border"
         >
-          {themeOptions.map(({ value, label, icon: Icon }) => (
+          {themeOptions.map(({ value, label, icon: Icon }, index) => (
             <button
               key={value}
               type="button"
+              aria-label={label}
+              title={label}
               aria-pressed={theme === value}
               onClick={() => setTheme(value)}
               className={cn(
-                "flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+                "flex size-8 items-center justify-center transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring",
+                index > 0 && "border-l border-border",
                 theme === value
-                  ? "border-primary bg-primary/5 font-medium text-primary"
-                  : "border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
               )}
             >
-              <Icon className="size-5" />
-              <span>{label}</span>
+              <Icon className="size-4" />
             </button>
           ))}
         </div>
@@ -210,13 +197,105 @@ function GeneralSection() {
   )
 }
 
-function AccountSection({
-  user,
-  displayName,
-}: {
-  user: ConfigUser
-  displayName: string
-}) {
+function useAutoSave(initialValue: string, field: "name" | "nickname") {
+  const router = useRouter()
+  const { update } = useSession()
+  const [value, setValue] = useState(initialValue)
+  const [status, setStatus] = useState<SaveStatus>("idle")
+  const savedValue = useRef(initialValue)
+
+  useEffect(() => {
+    const trimmed = value.trim()
+
+    if (trimmed === savedValue.current.trim()) {
+      return
+    }
+
+    if (field === "name" && trimmed.length < 2) {
+      return
+    }
+
+    const controller = new AbortController()
+    setStatus("saving")
+
+    const timeout = setTimeout(async () => {
+      try {
+        const response = await fetch("/api/user", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [field]: trimmed }),
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          throw new Error("Falha ao salvar")
+        }
+
+        savedValue.current = trimmed
+
+        await update(
+          field === "name"
+            ? { user: { name: trimmed } }
+            : { user: { nickname: trimmed || null } },
+        )
+        router.refresh()
+        setStatus("saved")
+      } catch {
+        if (!controller.signal.aborted) {
+          setStatus("error")
+        }
+      }
+    }, 600)
+
+    return () => {
+      controller.abort()
+      clearTimeout(timeout)
+    }
+  }, [value, field, update, router])
+
+  return { value, setValue, status }
+}
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  if (status === "idle") {
+    return null
+  }
+
+  if (status === "saving") {
+    return (
+      <p
+        role="status"
+        className="flex items-center gap-1 text-xs text-muted-foreground"
+      >
+        <Loader2 className="size-3 animate-spin" />
+        Salvando...
+      </p>
+    )
+  }
+
+  if (status === "saved") {
+    return (
+      <p role="status" className="flex items-center gap-1 text-xs text-primary">
+        <Check className="size-3" />
+        Salvo
+      </p>
+    )
+  }
+
+  return (
+    <p role="alert" className="text-xs text-destructive">
+      Não foi possível salvar. Tente novamente.
+    </p>
+  )
+}
+
+function AccountSection({ user }: { user: ConfigUser }) {
+  const name = useAutoSave(user.name ?? "", "name")
+  const nickname = useAutoSave(user.nickname ?? "", "nickname")
+  const [signOutOpen, setSignOutOpen] = useState(false)
+
+  const displayName = name.value.trim() || user.email || "Usuário"
+
   return (
     <div className="space-y-6">
       <header className="space-y-1">
@@ -229,7 +308,9 @@ function AccountSection({
       <div className="flex items-center gap-3 rounded-xl border border-border p-4">
         <Avatar className="size-12 shrink-0">
           {user.image && <AvatarImage src={user.image} alt="" />}
-          <AvatarFallback>{getInitials(user)}</AvatarFallback>
+          <AvatarFallback>
+            {getInitials({ name: name.value, email: user.email })}
+          </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{displayName}</p>
@@ -241,63 +322,81 @@ function AccountSection({
         </div>
       </div>
 
-      <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-        Mais opções de conta estarão disponíveis em breve.
-      </p>
-    </div>
-  )
-}
-
-function ApiKeySection({
-  apiKey,
-  copied,
-  onGenerate,
-  onCopy,
-}: {
-  apiKey: string
-  copied: boolean
-  onGenerate: () => void
-  onCopy: () => void
-}) {
-  return (
-    <div className="space-y-6">
-      <header className="space-y-1">
-        <h3 className="font-heading text-base font-semibold">Chave de API</h3>
-        <p className="text-sm text-muted-foreground">
-          Use esta chave para autenticar suas integrações.
-        </p>
-      </header>
-
-      <div className="space-y-2">
-        <Label htmlFor="api-key">Chave</Label>
-        <div className="flex gap-2">
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="account-name">Seu nome</Label>
           <Input
-            id="api-key"
-            readOnly
-            value={apiKey}
-            placeholder="Nenhuma chave gerada"
-            className="h-10 font-mono text-xs"
+            id="account-name"
+            value={name.value}
+            onChange={(event) => name.setValue(event.target.value)}
+            placeholder="Seu nome"
+            autoComplete="name"
+            maxLength={80}
+            className="h-10"
           />
+          <SaveIndicator status={name.status} />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="account-nickname">Seu apelido</Label>
+          <Input
+            id="account-nickname"
+            value={nickname.value}
+            onChange={(event) => nickname.setValue(event.target.value)}
+            placeholder="Como quer ser chamado"
+            autoComplete="nickname"
+            maxLength={40}
+            className="h-10"
+          />
+          <SaveIndicator status={nickname.status} />
+        </div>
+      </div>
+
+      <div className="space-y-3 border-t border-border pt-5">
+        <div className="space-y-1">
+          <h4 className="font-heading text-sm font-semibold">Sua conta</h4>
+          <p className="text-xs text-muted-foreground">
+            Gerencie o acesso à sua conta.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button
             type="button"
             variant="outline"
-            size="icon-lg"
-            onClick={onCopy}
-            disabled={!apiKey}
-            aria-label="Copiar chave"
+            onClick={() => setSignOutOpen(true)}
           >
-            {copied ? <Check /> : <Copy />}
+            <LogOut />
+            Desconectar
+          </Button>
+          <Button type="button" variant="destructive" disabled>
+            <Trash2 />
+            Apagar conta
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          A chave é gerada apenas nesta sessão e ainda não é salva.
-        </p>
       </div>
 
-      <Button type="button" onClick={onGenerate}>
-        {apiKey ? <RefreshCw /> : <KeyRound />}
-        {apiKey ? "Gerar nova chave" : "Gerar chave"}
-      </Button>
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desconectar da conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você precisará entrar novamente para acessar o painel.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void signOut({ redirectTo: "/login" })
+              }}
+            >
+              Desconectar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
+

@@ -53,6 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return {
           id: user.id,
           name: user.name,
+          nickname: user.nickname,
           email: user.email,
           image: user.image,
         }
@@ -61,6 +62,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   session: {
     strategy: "jwt",
+  },
+  callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id
+        token.nickname =
+          (user as { nickname?: string | null }).nickname ?? null
+      }
+
+      if (trigger === "update" && session?.user) {
+        if (typeof session.user.name === "string") {
+          token.name = session.user.name
+        }
+
+        if (session.user.nickname !== undefined) {
+          token.nickname = session.user.nickname
+        }
+      }
+
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id ?? token.sub ?? ""
+        session.user.nickname = token.nickname ?? null
+      }
+
+      return session
+    },
   },
   pages: {
     signIn: "/login",

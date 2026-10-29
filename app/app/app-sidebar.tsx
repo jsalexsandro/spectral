@@ -44,6 +44,7 @@ import { OptionComponent } from "./option-component"
 
 type SidebarUser = {
   name?: string | null
+  nickname?: string | null
   email?: string | null
   image?: string | null
 }

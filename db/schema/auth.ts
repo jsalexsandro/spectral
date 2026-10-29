@@ -5,6 +5,7 @@ import type { AdapterAccountType } from "next-auth/adapters"
 export const users = pgTable("user", {
   id: text("id").primaryKey().$defaultFn(() => createId()),
   name: text("name"),
+  nickname: text("nickname"),
   email: text("email").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),

@@ -45,9 +45,25 @@ claro/escuro/sistema é controlado em Configurações → Geral → Aparência.
 - Proteção central em `proxy.ts` + verificação de sessão no layout de `/app`
 - Documentação dos schemas em `specs/schema.md`
 
+## BYOK (Passo 3)
+- Seção **BYOK** em Configurações → BYOK (substitui a antiga "Chave de API")
+- Provedores iniciais: OpenAI, Anthropic e Google Gemini (`lib/ai/providers.ts`)
+- Chaves salvas por usuário na tabela `AIKey`, criptografadas com AES-256-GCM
+- Rotas: `GET /api/byok`, `PUT /api/byok/[provider]`, `DELETE /api/byok/[provider]`
+- A API nunca retorna a chave; apenas o status e os 4 últimos caracteres
+- Documentação da tabela em `specs/schema.md`
+
+## Catálogo de modelos (Passo 3)
+- Catálogo estático e tipado em `lib/ai/models.ts`, validado com Zod na inicialização
+- Página pública `/provider/[provider]/models` com metadados de cada modelo
+- Rotas: `GET /api/models` (todos os provedores) e `GET /api/models/[provider]`
+- Provedores disponíveis: `openai`, `anthropic` e `google`
+- Para adicionar ou atualizar um modelo, edite `modelCatalog` em `lib/ai/models.ts` e mantenha o par `(provider, id)` único
+
 ### Variáveis de ambiente
 - `DATABASE_URL` — string de conexão PostgreSQL
 - `AUTH_SECRET` — segredo do Auth.js
+- `BYOK_ENCRYPTION_KEY` — segredo usado para criptografar as chaves BYOK (usa `AUTH_SECRET` como fallback)
 - `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — login com Google
 - `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` — login com GitHub
 - `AUTH_APPLE_ID` / `AUTH_APPLE_SECRET` — login com Apple (opcional)

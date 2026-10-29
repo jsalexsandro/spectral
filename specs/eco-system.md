@@ -93,4 +93,34 @@ O necessario para o inicio da aplicação.
     Tema [sytem, light, dark]
 
   2. Conta
-  3. Chave de Api
+     Seu perfil
+     [UserCardComponent]: [Avatar, Name \n Email]
+     Seu Nome - [input] (auto-save)
+     Seu Apelido - [input]  (auto-save)
+
+     Sua conta
+     Desconectar - logout -  component
+     Apagar Conta  - (Apenas o botão não funciona por enquanto)
+
+  3. BYOK
+     Uma das etapas do site, é o BYOK. Declaras as KEYS dos provedores de IA
+
+     Use suas proprias chaves de api no Spectral
+
+     Disponiveis - input: Pesquisar provedores
+     AiProvidersCardComponent:
+     "Provedor" - [Não Configurado] (ProviderConfigComponent
+    
+     - [x] Definir um api no backend com todos os provedores para listarmos aqui (`GET /api/byok`)
+     - [x] Definir o schema do BYOK no DB (tabela `AIKey`)
+     - [x] Salvar/remover chave por provedor (`PUT`/`DELETE /api/byok/[provider]`)
+     - [x] Criptografia das chaves com `BYOK_ENCRYPTION_KEY`
+     - [x] Provedores iniciais: OpenAI, Anthropic e Google Gemini
+
+     A criação de "/provider/[provider]/models
+     Será um tela basisca e simples, onde fica listado os modelos dos provedores suportados
+
+     - será necessario criar uma api que lista os modelos suportados pela spectral, com algums metadados:
+       EX: Sep 23, 2026 262K context $0.70/M input tokens $1.40/M output tokens
+       
+    Isso deve ser feito com grande anteção pois ao decorrer será adicionado novos modelos, e isso deve ser estavel e controlavel
