@@ -1,4 +1,4 @@
-export type ProviderId = "openai" | "anthropic" | "google"
+export type ProviderId = "openai" | "anthropic" | "google" | "openrouter"
 
 export type AIProvider = {
   id: ProviderId
@@ -35,6 +35,13 @@ export const aiProviders = [
     description: "Modelos Gemini do Google AI Studio.",
     docsUrl: "https://aistudio.google.com/app/apikey",
     placeholder: "AIza...",
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    description: "Acesso unificado a modelos de diversos provedores.",
+    docsUrl: "https://openrouter.ai/keys",
+    placeholder: "sk-or-...",
   },
 ] as const satisfies readonly AIProvider[]
 

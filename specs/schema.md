@@ -39,13 +39,26 @@ Armazena contas vinculadas para login social (Google, GitHub, Apple, etc.).
 Chaves de API dos provedores de IA por usuário (BYOK). O valor em `apiKey` é armazenado criptografado (AES-256-GCM).
 - `id` (text, PK) - CUID gerado automaticamente
 - `userId` (text, FK -> user.id, cascade delete) - Indexado
-- `provider` (text) - Identificador do provedor: `openai`, `anthropic` ou `google`
+- `provider` (text) - Identificador do provedor: `openai`, `anthropic`, `google` ou `openrouter`
 - `apiKey` (text, not null) - Chave criptografada no formato `v1:<iv>:<tag>:<ciphertext>` (base64)
 - `createdAt` (timestamp, not null) - Default: now()
 - `updatedAt` (timestamp, not null) - Default: now(); atualizado em cada upsert
 - Unique index: (userId, provider)
 
 > A chave nunca é retornada pela API; a listagem expõe apenas o status e os 4 últimos caracteres, calculados no servidor.
+
+### InstantModel
+Preferência do usuário sobre quais modelos aparecem na seleção rápida do chat.
+- `id` (text, PK) - CUID gerado automaticamente
+- `userId` (text, FK -> user.id, cascade delete) - Indexado
+- `provider` (text) - Identificador do provedor: `openai`, `anthropic`, `google` ou `openrouter`
+- `modelId` (text) - ID do modelo no catálogo (`lib/ai/models.ts`)
+- `enabled` (boolean, not null) - Default: `true`; `false` remove o modelo da seleção rápida
+- `createdAt` (timestamp, not null) - Default: now()
+- `updatedAt` (timestamp, not null) - Default: now(); atualizado em cada upsert
+- Unique index: (userId, provider, modelId)
+
+> A ausência de registro significa modelo ativo. O `PUT /api/instant-models` grava apenas overrides explícitos; registros de modelos removidos do catálogo são ignorados na leitura.
 
 ### verificationToken
 Para verificação de email/magic links.
@@ -59,6 +72,7 @@ Para verificação de email/magic links.
 - `0000_jazzy_fenris` — tabelas iniciais do Auth.js (`user`, `account`, `session`, `verificationToken`) e coluna `password`.
 - `0001_add_nickname` — adiciona a coluna `nickname` em `user`.
 - `0002_ai_key` — cria a tabela `AIKey` (chaves BYOK por usuário).
+- `0003_instant_model` — cria a tabela `InstantModel` (preferências de modelos rápidos por usuário).
 
 Aplicar com:
 

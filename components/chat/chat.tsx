@@ -3,10 +3,17 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowUp, Paperclip } from "lucide-react"
 import { useChatSession } from "@/app/app/chat-provider"
-import { ModelSelect, type ChatModel } from "./model-select"
+import {
+  resolveDefaultModelKey,
+  type InstantModelPreference,
+} from "@/lib/ai/instant-models"
+import type { ProviderId } from "@/lib/ai/providers"
+import { ModelSelect } from "./model-select"
 
 type ChatProps = {
   greeting?: string
+  configuredProviders: readonly ProviderId[]
+  instantPreferences: readonly InstantModelPreference[]
 }
 
 type ChatMessage = {
@@ -17,10 +24,16 @@ type ChatMessage = {
 
 const MAX_TEXTAREA_HEIGHT = 240
 
-export function Chat({ greeting = "Olá!" }: ChatProps) {
+export function Chat({
+  greeting = "Olá!",
+  configuredProviders,
+  instantPreferences,
+}: ChatProps) {
   const { chatId } = useChatSession()
   const [message, setMessage] = useState("")
-  const [model, setModel] = useState<ChatModel>("spectral-pro")
+  const [model, setModel] = useState(() =>
+    resolveDefaultModelKey(configuredProviders, instantPreferences),
+  )
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -115,7 +128,12 @@ export function Chat({ greeting = "Olá!" }: ChatProps) {
               aria-label="Mensagem"
               className="max-h-60 min-h-10 flex-1 resize-none overflow-y-auto bg-transparent px-1 py-2 text-sm outline-none [scrollbar-width:none] placeholder:text-muted-foreground [&::-webkit-scrollbar]:hidden"
             />
-            <ModelSelect value={model} onChange={setModel} />
+            <ModelSelect
+              value={model}
+              onChange={setModel}
+              configuredProviders={configuredProviders}
+              instantPreferences={instantPreferences}
+            />
             <button
               type="submit"
               aria-label="Enviar mensagem"

@@ -69,6 +69,7 @@ export function ProviderConfigComponent({
     return null
   }
 
+  const currentProvider = provider
   const canSave = apiKey.trim().length >= 8 && !isSaving && !isRemoving
   const inputId = `api-key-${provider.id}`
 
@@ -83,7 +84,7 @@ export function ProviderConfigComponent({
     setError(null)
 
     try {
-      const response = await fetch(`/api/byok/${provider.id}`, {
+      const response = await fetch(`/api/byok/${currentProvider.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiKey: apiKey.trim() }),
@@ -96,7 +97,7 @@ export function ProviderConfigComponent({
       const data = (await response.json()) as { maskedKey?: string | null }
 
       onSaved({
-        ...provider,
+        ...currentProvider,
         configured: true,
         maskedKey: data.maskedKey ?? null,
         updatedAt: new Date().toISOString(),
@@ -113,7 +114,7 @@ export function ProviderConfigComponent({
     setError(null)
 
     try {
-      const response = await fetch(`/api/byok/${provider.id}`, {
+      const response = await fetch(`/api/byok/${currentProvider.id}`, {
         method: "DELETE",
       })
 
@@ -123,7 +124,7 @@ export function ProviderConfigComponent({
 
       setRemoveOpen(false)
       onSaved({
-        ...provider,
+        ...currentProvider,
         configured: false,
         maskedKey: null,
         updatedAt: null,

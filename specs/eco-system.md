@@ -66,6 +66,7 @@ O necessario para o inicio da aplicação.
   - [x] OptionComponent
         - Novo Chat (estado inicial do /app) ao entrar no site estamos nessa oção inicial por padrão. 
         - Pesquisar (não é bem uma opção e sim botão) ele deve abrir um modal com um input, digite o nome do chat... (o component aplicar um blur no fundo)
+  - [ ] MyChatsComponents (gestão dos chats) — Passo 4
   - [x] Footer com o o card de user: [Avatar: nome]
     - [x] ao clicar deve abrir um context menu, com duas opções por enquanto:
       - [x] Configurações (modal de configurações) ConfigComponent
@@ -81,7 +82,7 @@ O necessario para o inicio da aplicação.
     Regras basicas:
       1. Não ter overflow (scrrol), a usar o shift-enter o component vai crescendo
       2. Não é um input comum, pois ele tem botões nas suas laterais.
-    SelectComponent proximo ao botão de send, para selecionar Modelos
+    SelectModelComponent proximo ao botão de send, para selecionar Modelos
 
   ConfigComponent:
   Um modal de configurações da site
@@ -115,7 +116,7 @@ O necessario para o inicio da aplicação.
      - [x] Definir o schema do BYOK no DB (tabela `AIKey`)
      - [x] Salvar/remover chave por provedor (`PUT`/`DELETE /api/byok/[provider]`)
      - [x] Criptografia das chaves com `BYOK_ENCRYPTION_KEY`
-     - [x] Provedores iniciais: OpenAI, Anthropic e Google Gemini
+     - [x] Provedores iniciais: OpenAI, Anthropic, Google Gemini e OpenRouter
 
      A criação de "/provider/[provider]/models
      Será um tela basisca e simples, onde fica listado os modelos dos provedores suportados
@@ -124,3 +125,15 @@ O necessario para o inicio da aplicação.
        EX: Sep 23, 2026 262K context $0.70/M input tokens $1.40/M output tokens
        
     Isso deve ser feito com grande anteção pois ao decorrer será adicionado novos modelos, e isso deve ser estavel e controlavel
+
+    veja todos os providers em `specs/providers.md`
+
+    - [x] O select de models (seleção rapida de modelos para uso): (InstantModel)
+      Um toogle-buton que (false/true) que deixa ativado/desativado. os modelos para uso rapido no chat.
+      com base no modelos que estão disponiveis dos providers, ele vai deixando ativos os que ele vai usar.
+    - [x] Toggle por modelo no dropdown do `ModelSelect` do chat
+    - [x] Preferência persistida por usuário na tabela `InstantModel`
+    - [x] Rotas `GET /api/instant-models` e `PUT /api/instant-models`
+    - [x] Catálogo com OpenRouter (`MODEL_CATALOG_VERSION = 2`)
+
+
