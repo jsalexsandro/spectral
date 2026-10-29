@@ -41,7 +41,7 @@ escuro já está preparado para um toggle futuro.
 - NextAuth.js v5 configurado em `/auth.ts` (Google, GitHub, Apple opcional e Credentials)
 - Senhas com hash scrypt (`node:crypto`) na coluna `user.password`
 - Rotas: `/api/auth/[...nextauth]`, `/api/auth/check-email`, `/api/auth/register`
-- Páginas: `/login`, `/cadastro`, `/app` (protegida) e `/platform` (redirect)
+- Páginas: `/login`, `/register`, `/app` (protegida) e `/platform` (redirect)
 - Proteção central em `proxy.ts` + verificação de sessão no layout de `/app`
 - Documentação dos schemas em `specs/schema.md`
 

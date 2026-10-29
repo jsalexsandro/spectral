@@ -244,7 +244,7 @@ export function LoginForm({ callbackUrl = "/app" }: { callbackUrl?: string }) {
                   <p className="text-xs text-muted-foreground">
                     E-mail não encontrado.{" "}
                     <Link
-                      href="/cadastro"
+                      href="/register"
                       className="text-primary underline-offset-4 hover:underline"
                     >
                       Criar conta
@@ -325,7 +325,7 @@ export function LoginForm({ callbackUrl = "/app" }: { callbackUrl?: string }) {
         <p className="text-sm text-muted-foreground text-center">
           Não sou cadastrado.{" "}
           <Link
-            href="/cadastro"
+            href="/register"
             className="text-primary font-medium hover:text-primary/80 underline-offset-4"
           >
             Cadastre-se
