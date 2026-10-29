@@ -6,7 +6,9 @@ import {
   PanelLeft,
   Settings,
   Info,
+  Loader2,
   LogOut,
+  MessageSquare,
   MessageSquarePlus,
   Search,
 } from "lucide-react"
@@ -40,6 +42,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils"
 import { useChatSession } from "./chat-provider"
 import { ConfigComponent } from "./config-component"
+import { MyChats } from "./my-chats"
 import { OptionComponent } from "./option-component"
 
 type SidebarUser = {
@@ -66,7 +69,15 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
   const [signOutOpen, setSignOutOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const { startNewChat } = useChatSession()
+  const { startNewChat, openChat, chats, chatsLoading, isDraft } =
+    useChatSession()
+
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase("pt-BR")
+  const searchResults = normalizedQuery
+    ? chats.filter((chat) =>
+        chat.title.toLocaleLowerCase("pt-BR").includes(normalizedQuery),
+      )
+    : []
 
   function handleSearchOpenChange(nextOpen: boolean) {
     setSearchOpen(nextOpen)
@@ -114,7 +125,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
         <OptionComponent
           icon={MessageSquarePlus}
           label="Novo Chat"
-          active
+          active={isDraft}
           collapsed={!open}
           onClick={startNewChat}
         />
@@ -124,6 +135,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
           collapsed={!open}
           onClick={() => setSearchOpen(true)}
         />
+        <MyChats collapsed={!open} />
       </div>
 
       <footer className="border-t border-border p-2">
@@ -210,10 +222,37 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
               className="h-11 pl-9"
             />
           </div>
-          {searchQuery.trim() && (
-            <p className="text-sm text-muted-foreground">
-              Nenhum chat encontrado para “{searchQuery.trim()}”.
-            </p>
+          {normalizedQuery && (
+            <div className="max-h-72 overflow-y-auto">
+              {chatsLoading && chats.length === 0 ? (
+                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Carregando chats...
+                </p>
+              ) : searchResults.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum chat encontrado para “{searchQuery.trim()}”.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {searchResults.map((chat) => (
+                    <li key={chat.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void openChat(chat.id)
+                          handleSearchOpenChange(false)
+                        }}
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"
+                      >
+                        <MessageSquare className="size-4 shrink-0" />
+                        <span className="truncate">{chat.title}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>

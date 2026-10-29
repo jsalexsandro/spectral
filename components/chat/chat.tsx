@@ -1,12 +1,15 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { ArrowUp, Paperclip } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useChat } from "@ai-sdk/react"
+import { DefaultChatTransport, type UIMessage } from "ai"
+import { ArrowUp, Loader2, Paperclip, Square } from "lucide-react"
 import { useChatSession } from "@/app/app/chat-provider"
 import {
   resolveDefaultModelKey,
   type InstantModelPreference,
 } from "@/lib/ai/instant-models"
+import { aiModels, getModelKey } from "@/lib/ai/models"
 import type { ProviderId } from "@/lib/ai/providers"
 import { ModelSelect } from "./model-select"
 
@@ -16,34 +19,95 @@ type ChatProps = {
   instantPreferences: readonly InstantModelPreference[]
 }
 
-type ChatMessage = {
-  id: number
-  role: "user"
-  content: string
+type ChatSessionProps = ChatProps & {
+  chatId: string
+  initialMessages: UIMessage[]
+  initialModel: string | null
+  onChatPersisted: () => void
 }
 
 const MAX_TEXTAREA_HEIGHT = 240
+
+function getMessageText(message: UIMessage): string {
+  return message.parts
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("")
+    .trim()
+}
 
 export function Chat({
   greeting = "Olá!",
   configuredProviders,
   instantPreferences,
 }: ChatProps) {
-  const { chatId } = useChatSession()
-  const [message, setMessage] = useState("")
-  const [model, setModel] = useState(() =>
-    resolveDefaultModelKey(configuredProviders, instantPreferences),
+  const {
+    chatId,
+    initialMessages,
+    initialModel,
+    isLoadingChat,
+    markChatPersisted,
+  } = useChatSession()
+
+  if (isLoadingChat) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  return (
+    <ChatSession
+      key={chatId}
+      chatId={chatId}
+      initialMessages={initialMessages}
+      initialModel={initialModel}
+      greeting={greeting}
+      configuredProviders={configuredProviders}
+      instantPreferences={instantPreferences}
+      onChatPersisted={markChatPersisted}
+    />
   )
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+}
+
+function ChatSession({
+  chatId,
+  initialMessages,
+  initialModel,
+  greeting,
+  configuredProviders,
+  instantPreferences,
+  onChatPersisted,
+}: ChatSessionProps) {
+  const [message, setMessage] = useState("")
+  const [model, setModel] = useState(() => {
+    if (
+      initialModel &&
+      aiModels.some((item) => getModelKey(item) === initialModel)
+    ) {
+      return initialModel
+    }
+
+    return resolveDefaultModelKey(configuredProviders, instantPreferences)
+  })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const transport = useMemo(
+    () => new DefaultChatTransport({ api: "/api/chat" }),
+    [],
+  )
 
-  const canSend = message.trim().length > 0
+  const { messages, sendMessage, status, error, stop } = useChat<UIMessage>({
+    id: chatId,
+    messages: initialMessages,
+    transport,
+    onFinish: onChatPersisted,
+  })
+
+  const isBusy = status === "submitted" || status === "streaming"
+  const canSend = message.trim().length > 0 && model.length > 0 && !isBusy
   const hasMessages = messages.length > 0
-
-  useEffect(() => {
-    setMessages([])
-    setMessage("")
-  }, [chatId])
 
   useEffect(() => {
     const textarea = textareaRef.current
@@ -59,19 +123,28 @@ export function Chat({
     )}px`
   }, [message])
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: "end" })
+  }, [messages, status])
+
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const content = message.trim()
 
-    if (!content) {
+    if (!content || !model || isBusy) {
       return
     }
 
-    setMessages((current) => [
-      ...current,
-      { id: Date.now(), role: "user", content },
-    ])
+    void sendMessage(
+      { text: content },
+      {
+        body: {
+          chatId,
+          model,
+        },
+      },
+    )
     setMessage("")
     textareaRef.current?.focus()
   }
@@ -88,14 +161,33 @@ export function Chat({
       {hasMessages ? (
         <div className="flex-1 overflow-y-auto px-4 py-8">
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-            {messages.map((item) => (
-              <div
-                key={item.id}
-                className="max-w-[85%] self-end rounded-2xl bg-primary px-4 py-2.5 text-sm break-words whitespace-pre-wrap text-primary-foreground"
-              >
-                {item.content}
+            {messages.map((item) => {
+              const text = getMessageText(item)
+
+              if (!text && item.role === "assistant") {
+                return null
+              }
+
+              return (
+                <div
+                  key={item.id}
+                  className={
+                    item.role === "user"
+                      ? "max-w-[85%] self-end rounded-2xl bg-primary px-4 py-2.5 text-sm break-words whitespace-pre-wrap text-primary-foreground"
+                      : "max-w-[85%] self-start rounded-2xl bg-muted px-4 py-2.5 text-sm break-words whitespace-pre-wrap text-foreground"
+                  }
+                >
+                  {text}
+                </div>
+              )
+            })}
+            {status === "submitted" && (
+              <div className="flex max-w-[85%] items-center gap-2 self-start rounded-2xl bg-muted px-4 py-2.5 text-sm text-muted-foreground">
+                <Loader2 className="size-3.5 animate-spin" />
+                Pensando...
               </div>
-            ))}
+            )}
+            <div ref={bottomRef} />
           </div>
         </div>
       ) : (
@@ -135,17 +227,29 @@ export function Chat({
               instantPreferences={instantPreferences}
             />
             <button
-              type="submit"
-              aria-label="Enviar mensagem"
-              disabled={!canSend}
+              type={isBusy ? "button" : "submit"}
+              aria-label={isBusy ? "Parar resposta" : "Enviar mensagem"}
+              title={isBusy ? "Parar resposta" : "Enviar mensagem"}
+              onClick={isBusy ? () => stop() : undefined}
+              disabled={!isBusy && !canSend}
               className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <ArrowUp className="size-4" />
+              {isBusy ? (
+                <Square className="size-3.5 fill-current" />
+              ) : (
+                <ArrowUp className="size-4" />
+              )}
             </button>
           </div>
           <p className="mt-2 text-center text-xs text-muted-foreground">
             Enter para enviar · Shift+Enter para quebrar linha
           </p>
+          {error && (
+            <p className="mt-2 text-center text-xs text-destructive">
+              Não foi possível concluir a resposta. Verifique o modelo e a
+              chave do provedor.
+            </p>
+          )}
         </form>
       </div>
     </div>

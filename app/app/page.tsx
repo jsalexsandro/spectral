@@ -8,6 +8,8 @@ import { isProviderId, type ProviderId } from "@/lib/ai/providers"
 import type { InstantModelPreference } from "@/lib/ai/instant-models"
 import { Chat } from "@/components/chat/chat"
 
+export const instant = false
+
 export const metadata: Metadata = {
   title: "Plataforma",
   description: "Painel do Spectral AI.",

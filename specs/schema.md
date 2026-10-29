@@ -60,6 +60,36 @@ Preferência do usuário sobre quais modelos aparecem na seleção rápida do ch
 
 > A ausência de registro significa modelo ativo. O `PUT /api/instant-models` grava apenas overrides explícitos; registros de modelos removidos do catálogo são ignorados na leitura.
 
+### MessageRole
+Enum PostgreSQL com os valores `user`, `assistant` e `system`.
+
+### Chat
+Conversa do usuário. O `id` é gerado no cliente (UUID) para permitir o envio da primeira mensagem sem criar registros vazios, mas também aceita o CUID padrão do banco.
+- `id` (text, PK) - UUID gerado no cliente ou CUID padrão
+- `userId` (text, FK -> user.id, cascade delete)
+- `title` (text, not null) - Default: `"Nova conversa"`; derivado da primeira mensagem do usuário
+- `provider` (text, nullable) - Provedor do **último modelo usado** na conversa
+- `model` (text, nullable) - ID do **último modelo usado** na conversa
+- `createdAt` (timestamp, not null) - Default: now()
+- `updatedAt` (timestamp, not null) - Default: now(); atualizado a cada nova mensagem
+- Index: (userId, updatedAt)
+
+### Message
+Mensagem persistida de uma conversa.
+- `id` (text, PK) - ID do `UIMessage` gerado pelo AI SDK
+- `chatId` (text, FK -> Chat.id, cascade delete)
+- `role` (MessageRole, not null) - `user`, `assistant` ou `system`
+- `content` (text, not null) - Texto derivado da concatenação das partes de texto (usado para título e busca)
+- `parts` (jsonb, not null) - Partes completas do `UIMessage` (`UIMessagePart[]`), preservando texto, raciocínio, ferramentas etc.
+- `provider` (text, nullable) - Provedor do modelo que gerou a resposta (`assistant`)
+- `model` (text, nullable) - ID do modelo que gerou a resposta (`assistant`)
+- `inputTokens` (integer, nullable) - Tokens de entrada reportados pelo provedor
+- `outputTokens` (integer, nullable) - Tokens de saída reportados pelo provedor
+- `createdAt` (timestamp, not null) - Default: now()
+- Index: (chatId, createdAt)
+
+> A mensagem do usuário é gravada imediatamente no envio. A resposta do assistente é gravada no fim do stream, incluindo partes e uso de tokens. Mensagens de conversas de outros usuários nunca são retornadas.
+
 ### verificationToken
 Para verificação de email/magic links.
 - `identifier` (text)
@@ -73,6 +103,7 @@ Para verificação de email/magic links.
 - `0001_add_nickname` — adiciona a coluna `nickname` em `user`.
 - `0002_ai_key` — cria a tabela `AIKey` (chaves BYOK por usuário).
 - `0003_instant_model` — cria a tabela `InstantModel` (preferências de modelos rápidos por usuário).
+- `0004_chat` — cria o enum `MessageRole` e as tabelas `Chat` e `Message`.
 
 Aplicar com:
 

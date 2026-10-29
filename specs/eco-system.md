@@ -66,7 +66,7 @@ O necessario para o inicio da aplicação.
   - [x] OptionComponent
         - Novo Chat (estado inicial do /app) ao entrar no site estamos nessa oção inicial por padrão. 
         - Pesquisar (não é bem uma opção e sim botão) ele deve abrir um modal com um input, digite o nome do chat... (o component aplicar um blur no fundo)
-  - [ ] MyChatsComponents (gestão dos chats) — Passo 4
+  - [x] MyChatsComponents (gestão dos chats) — Passo 4
   - [x] Footer com o o card de user: [Avatar: nome]
     - [x] ao clicar deve abrir um context menu, com duas opções por enquanto:
       - [x] Configurações (modal de configurações) ConfigComponent
@@ -103,7 +103,7 @@ O necessario para o inicio da aplicação.
      Desconectar - logout -  component
      Apagar Conta  - (Apenas o botão não funciona por enquanto)
 
-  3. BYOK
+  3. Byok
      Uma das etapas do site, é o BYOK. Declaras as KEYS dos provedores de IA
 
      Use suas proprias chaves de api no Spectral
@@ -124,16 +124,47 @@ O necessario para o inicio da aplicação.
      - será necessario criar uma api que lista os modelos suportados pela spectral, com algums metadados:
        EX: Sep 23, 2026 262K context $0.70/M input tokens $1.40/M output tokens
        
-    Isso deve ser feito com grande anteção pois ao decorrer será adicionado novos modelos, e isso deve ser estavel e controlavel
-
+    Isso deve ser feito com grande anteção pois ao decorrer será adicionado novos modelos, e isso deve ser estavel e controlave
     veja todos os providers em `specs/providers.md`
 
-    - [x] O select de models (seleção rapida de modelos para uso): (InstantModel)
-      Um toogle-buton que (false/true) que deixa ativado/desativado. os modelos para uso rapido no chat.
-      com base no modelos que estão disponiveis dos providers, ele vai deixando ativos os que ele vai usar.
-    - [x] Toggle por modelo no dropdown do `ModelSelect` do chat
-    - [x] Preferência persistida por usuário na tabela `InstantModel`
-    - [x] Rotas `GET /api/instant-models` e `PUT /api/instant-models`
-    - [x] Catálogo com OpenRouter (`MODEL_CATALOG_VERSION = 2`)
+  4. Modelos rapidos (redirect para /providers/select-model )
+
+- [x] O select de models (seleção rapida de modelos para uso): (InstantModel) 
+  devemos definir uma rota para isso: /providers/select-model (requer auth)
+
+    header: selecione seus modelos - input: Procurar modelo
+
+    listar o nome do + Um toogle-buton que (false/true) que deixa ativado/desativado. os modelos para uso rapido no chat.
+    listar o nome especifico do modelo exeplo: anthropic/fable-5
+    as pequisa deve funcionar tanto no nome simples quanto o nome especifico do model
+
+    com base no modelos que estão disponiveis dos providers, ele vai deixando ativos os que ele vai usar.
+
+- [x] Toggle por modelo no dropdown do `ModelSelect` do chat
+      Deve listar apenas os modelos ativados e um link: Selecionar modelos
+
+- [x] Preferência persistida por usuário na tabela `InstantModel`
+- [x] Rotas `GET /api/instant-models` e `PUT /api/instant-models`
+- [x] Catálogo com OpenRouter (`MODEL_CATALOG_VERSION = 2`)
 
 
+
+Passo 4 (o basico do funcionamento dos chats)
+- Tendo cloncuido o passo 3 com exito, estamos formidavelente prontos para começar a implantação basica do chat 
+- 1. Definir o schema do chat (definir junto com o programador e salvar e schema.md para reference)
+- 2. Usaremos o ai-skd da vercel, por isso devemos definir o nosso service/lib para melhor manutenção
+- 3. O usuario escolhe qual modelo de ia, ele vai utilizar. esses modelos estão listados SelectModelComponent
+     Deve está disponiveis apenas o chats que foram previamente marcado na pagina de (InstantModel)
+
+  (bug econtrado apenas a primeira respota da ia ta salva, as demais não aparece)
+  (demais modelos not-working apenas o google adicionado pelo proprio user)
+
+  MyChatsComponents (gestão dos chats)
+  icone de 3 pontos na direita:
+  1. Renomear (o nome vira input o user escrever e é salvo automaticamente )
+  2. Excluir (modal de confirmação)
+
+  ao clicar nesse component ele deve se comrportar assim na url: /chat/[uuid], mantendo o layout padrão do site, mudar apenas url
+
+passo 5
+tools e system prompt

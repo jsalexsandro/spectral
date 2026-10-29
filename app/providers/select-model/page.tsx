@@ -1,0 +1,77 @@
+import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { connection } from "next/server"
+import { eq } from "drizzle-orm"
+import { auth } from "@/auth"
+import { db } from "@/db"
+import { aiKeys, instantModels } from "@/db/schema"
+import { getAvailableModels, type InstantModelPreference } from "@/lib/ai/instant-models"
+import { getModel } from "@/lib/ai/models"
+import { aiProviders, isProviderId, type ProviderId } from "@/lib/ai/providers"
+import { SelectModels, type ModelGroup } from "./select-models"
+
+export const instant = false
+
+export const metadata: Metadata = {
+  title: "Selecionar modelos",
+  description: "Escolha os modelos exibidos na seleção rápida do chat.",
+}
+
+export default async function SelectModelsPage() {
+  await connection()
+  const session = await auth()
+
+  if (!session?.user?.id) {
+    redirect("/login?callbackUrl=/providers/select-model")
+  }
+
+  const [keys, preferences] = await Promise.all([
+    db
+      .select({ provider: aiKeys.provider })
+      .from(aiKeys)
+      .where(eq(aiKeys.userId, session.user.id)),
+    db
+      .select({
+        provider: instantModels.provider,
+        modelId: instantModels.modelId,
+        enabled: instantModels.enabled,
+      })
+      .from(instantModels)
+      .where(eq(instantModels.userId, session.user.id)),
+  ])
+
+  const configuredProviders = Array.from(
+    new Set(
+      keys
+        .map((key) => key.provider)
+        .filter((provider): provider is ProviderId => isProviderId(provider)),
+    ),
+  )
+
+  const instantPreferences = preferences.flatMap((preference) => {
+    if (
+      !isProviderId(preference.provider) ||
+      !getModel(preference.provider, preference.modelId)
+    ) {
+      return []
+    }
+
+    return [
+      {
+        provider: preference.provider,
+        modelId: preference.modelId,
+        enabled: preference.enabled,
+      } satisfies InstantModelPreference,
+    ]
+  })
+
+  const availableModels = getAvailableModels(configuredProviders)
+  const groups: ModelGroup[] = aiProviders
+    .map((provider) => ({
+      provider,
+      models: availableModels.filter((model) => model.provider === provider.id),
+    }))
+    .filter((group) => group.models.length > 0)
+
+  return <SelectModels groups={groups} preferences={instantPreferences} />
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-const protectedPrefixes = ["/app", "/platform"]
+const protectedPrefixes = ["/app", "/platform", "/providers"]
 
 function hasSessionCookie(request: NextRequest) {
   return (
@@ -32,5 +32,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/app/:path*", "/platform/:path*"],
+  matcher: ["/app/:path*", "/platform/:path*", "/providers/:path*"],
 }

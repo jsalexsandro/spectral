@@ -72,6 +72,22 @@ function DropdownMenuLabel({
   )
 }
 
+function DropdownMenuHeading({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dropdown-menu-heading"
+      className={cn(
+        "px-1.5 py-1 text-xs font-medium text-muted-foreground",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
 function DropdownMenuItem({
   className,
   inset,
@@ -255,6 +271,7 @@ export {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuLabel,
+  DropdownMenuHeading,
   DropdownMenuItem,
   DropdownMenuCheckboxItem,
   DropdownMenuRadioGroup,

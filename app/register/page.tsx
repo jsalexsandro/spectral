@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
+import { connection } from "next/server"
 import { auth } from "@/auth"
 import { RegisterForm } from "./register-form"
 
@@ -28,6 +29,7 @@ async function RegisterContent({
 }: {
   searchParams: RegisterPageProps["searchParams"]
 }) {
+  await connection()
   const session = await auth()
 
   if (session?.user) {

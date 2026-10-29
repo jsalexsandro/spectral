@@ -43,9 +43,11 @@ export function resolveDefaultModelKey(
   configuredProviders: readonly ProviderId[],
   preferences: readonly InstantModelPreference[],
 ): string {
-  const model =
-    getQuickModels(configuredProviders, preferences)[0] ??
-    getAvailableModels(configuredProviders)[0]
+  if (configuredProviders.length === 0) {
+    return ""
+  }
+
+  const model = getQuickModels(configuredProviders, preferences)[0]
 
   return model ? getModelKey(model) : ""
 }

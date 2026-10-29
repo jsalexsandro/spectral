@@ -29,6 +29,13 @@
       "when": 1793213400000,
       "tag": "0003_instant_model",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793301111806,
+      "tag": "0004_chat",
+      "breakpoints": true
     }
   ]
 }

@@ -27,8 +27,8 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuHeading,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
@@ -434,7 +434,7 @@ export default function StyleguidePage() {
                     <ChevronDown data-icon="inline-end" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    <DropdownMenuLabel>Projeto</DropdownMenuLabel>
+                    <DropdownMenuHeading>Projeto</DropdownMenuHeading>
                     <DropdownMenuItem>
                       Editar
                       <DropdownMenuShortcut>⌘E</DropdownMenuShortcut>

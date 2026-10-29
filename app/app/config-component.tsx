@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signOut, useSession } from "next-auth/react"
 import {
@@ -11,6 +12,7 @@ import {
   Monitor,
   Moon,
   Settings,
+  SlidersHorizontal,
   Sun,
   Trash2,
   User,
@@ -66,6 +68,9 @@ const sections: {
   { id: "byok", label: "BYOK", icon: KeyRound },
 ]
 
+const navItemClassName =
+  "flex shrink-0 items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-ring"
+
 const themeOptions: {
   value: Theme
   label: string
@@ -104,14 +109,17 @@ export function ConfigComponent({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent padded={false} className="max-w-2xl">
+      <DialogContent
+        padded={false}
+        className="h-[min(640px,calc(100dvh-2rem))] max-w-3xl"
+      >
         <DialogTitle className="sr-only">Configurações</DialogTitle>
         <DialogDescription className="sr-only">
           Aparência, conta e provedores de IA.
         </DialogDescription>
 
-        <div className="grid sm:grid-cols-[200px_1fr]">
-          <aside className="border-b border-border bg-muted/40 p-4 sm:border-r sm:border-b-0">
+        <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] sm:grid-cols-[200px_minmax(0,1fr)] sm:grid-rows-1">
+          <aside className="min-h-0 overflow-y-auto border-b border-border bg-muted/40 p-4 sm:border-r sm:border-b-0">
             <p className="mb-3 px-2 font-heading text-sm font-semibold">
               Configurações
             </p>
@@ -123,7 +131,7 @@ export function ConfigComponent({
                   onClick={() => setSection(id)}
                   aria-current={section === id ? "page" : undefined}
                   className={cn(
-                    "flex shrink-0 items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-ring",
+                    navItemClassName,
                     section === id
                       ? "bg-accent font-medium text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -133,10 +141,20 @@ export function ConfigComponent({
                   <span className="truncate">{label}</span>
                 </button>
               ))}
+              <Link
+                href="/providers/select-model"
+                className={cn(
+                  navItemClassName,
+                  "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                )}
+              >
+                <SlidersHorizontal className="size-4 shrink-0" />
+                <span className="truncate">Modelos rápidos</span>
+              </Link>
             </nav>
           </aside>
 
-          <section className="min-h-[320px] p-6">
+          <section className="min-h-0 min-w-0 overflow-y-auto p-6">
             {section === "general" && <GeneralSection />}
             {section === "account" && <AccountSection user={user} />}
             {section === "byok" && <ByokSection />}

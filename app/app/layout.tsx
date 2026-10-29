@@ -5,6 +5,8 @@ import { AppSidebar } from "./app-sidebar"
 import { ChatProvider } from "./chat-provider"
 import { AppSessionProvider } from "./session-provider"
 
+export const instant = false
+
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const session = await auth()
 

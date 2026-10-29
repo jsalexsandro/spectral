@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
+import { connection } from "next/server"
 import { auth } from "@/auth"
 import { LoginForm } from "./login-form"
 
@@ -28,6 +29,7 @@ async function LoginContent({
 }: {
   searchParams: LoginPageProps["searchParams"]
 }) {
+  await connection()
   const session = await auth()
 
   if (session?.user) {

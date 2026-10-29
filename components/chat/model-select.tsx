@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Bot, ChevronDown, Loader2 } from "lucide-react"
+import Link from "next/link"
+import { Bot, ChevronDown, SlidersHorizontal } from "lucide-react"
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
+  DropdownMenuHeading,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
@@ -14,13 +16,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
-  getAvailableModels,
   getQuickModels,
-  isInstantModelEnabled,
-  upsertInstantPreference,
   type InstantModelPreference,
 } from "@/lib/ai/instant-models"
-import { aiModels, getModelKey, type AIModel } from "@/lib/ai/models"
+import { aiModels, getModelKey } from "@/lib/ai/models"
 import { aiProviders, isProviderId, type ProviderId } from "@/lib/ai/providers"
 
 type ModelSelectProps = {
@@ -41,8 +40,6 @@ export function ModelSelect({
     useState<readonly ProviderId[]>(configuredProviders)
   const [preferences, setPreferences] =
     useState<readonly InstantModelPreference[]>(instantPreferences)
-  const [pendingKeys, setPendingKeys] = useState<readonly string[]>([])
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) {
@@ -51,60 +48,76 @@ export function ModelSelect({
 
     let cancelled = false
 
-    async function refreshProviders() {
+    async function refreshSelection() {
       try {
-        const response = await fetch("/api/byok", { cache: "no-store" })
-
-        if (!response.ok) {
-          return
-        }
-
-        const data = (await response.json()) as {
-          providers?: { id: string; configured: boolean }[]
-        }
+        const [byokResponse, preferencesResponse] = await Promise.all([
+          fetch("/api/byok", { cache: "no-store" }),
+          fetch("/api/instant-models", { cache: "no-store" }),
+        ])
 
         if (cancelled) {
           return
         }
 
-        const next = (data.providers ?? [])
-          .filter((provider) => provider.configured && isProviderId(provider.id))
-          .map((provider) => provider.id as ProviderId)
+        if (byokResponse.ok) {
+          const data = (await byokResponse.json()) as {
+            providers?: { id: string; configured: boolean }[]
+          }
 
-        setProviders(next)
+          const next = (data.providers ?? [])
+            .filter(
+              (provider) => provider.configured && isProviderId(provider.id),
+            )
+            .map((provider) => provider.id as ProviderId)
+
+          setProviders(next)
+        }
+
+        if (preferencesResponse.ok) {
+          const data = (await preferencesResponse.json()) as {
+            models?: {
+              provider?: string
+              modelId?: string
+              enabled?: boolean
+            }[]
+          }
+
+          const next = (data.models ?? []).flatMap((preference) => {
+            if (
+              typeof preference.provider !== "string" ||
+              !isProviderId(preference.provider) ||
+              typeof preference.modelId !== "string" ||
+              typeof preference.enabled !== "boolean"
+            ) {
+              return []
+            }
+
+            return [
+              {
+                provider: preference.provider,
+                modelId: preference.modelId,
+                enabled: preference.enabled,
+              },
+            ]
+          })
+
+          setPreferences(next)
+        }
       } catch {
-        // Mantém a última lista conhecida em caso de falha.
+        return
       }
     }
 
-    void refreshProviders()
+    void refreshSelection()
 
     return () => {
       cancelled = true
     }
   }, [open])
 
-  const availableModels = useMemo(
-    () => getAvailableModels(providers),
-    [providers],
-  )
-
   const quickModels = useMemo(
     () => getQuickModels(providers, preferences),
     [providers, preferences],
-  )
-
-  const groups = useMemo(
-    () =>
-      aiProviders
-        .map((provider) => ({
-          provider,
-          models: availableModels.filter(
-            (model) => model.provider === provider.id,
-          ),
-        }))
-        .filter((group) => group.models.length > 0),
-    [availableModels],
   )
 
   const selectedModel = useMemo(
@@ -121,51 +134,6 @@ export function ModelSelect({
       onChange(getModelKey(quickModels[0]))
     }
   }, [quickModels, value, onChange])
-
-  async function handleToggle(model: AIModel, enabled: boolean) {
-    const key = getModelKey(model)
-
-    if (pendingKeys.includes(key)) {
-      return
-    }
-
-    setError(null)
-    setPreferences((current) =>
-      upsertInstantPreference(current, {
-        provider: model.provider,
-        modelId: model.id,
-        enabled,
-      }),
-    )
-    setPendingKeys((current) => [...current, key])
-
-    try {
-      const response = await fetch("/api/instant-models", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          provider: model.provider,
-          modelId: model.id,
-          enabled,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Falha ao salvar")
-      }
-    } catch {
-      setPreferences((current) =>
-        upsertInstantPreference(current, {
-          provider: model.provider,
-          modelId: model.id,
-          enabled: !enabled,
-        }),
-      )
-      setError("Não foi possível salvar a preferência. Tente novamente.")
-    } finally {
-      setPendingKeys((current) => current.filter((item) => item !== key))
-    }
-  }
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -185,32 +153,30 @@ export function ModelSelect({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" side="top" sideOffset={8} className="w-72">
-        <DropdownMenuLabel>Usar modelo</DropdownMenuLabel>
+        <DropdownMenuHeading>Usar modelo</DropdownMenuHeading>
 
         {quickModels.length === 0 ? (
           <p className="px-2 py-1.5 text-xs text-muted-foreground">
-            Nenhum modelo rápido ativo. Ative um abaixo.
+            Nenhum modelo rápido ativo. Use “Selecionar modelos” abaixo.
           </p>
         ) : (
           <DropdownMenuRadioGroup
             value={value}
             onValueChange={(next) => onChange(String(next))}
           >
-            {groups.map(({ provider, models }) => {
-              const quick = models.filter((model) =>
-                quickModels.some(
-                  (item) => getModelKey(item) === getModelKey(model),
-                ),
+            {aiProviders.map((provider) => {
+              const models = quickModels.filter(
+                (model) => model.provider === provider.id,
               )
 
-              if (quick.length === 0) {
+              if (models.length === 0) {
                 return null
               }
 
               return (
                 <DropdownMenuGroup key={provider.id}>
                   <DropdownMenuLabel>{provider.name}</DropdownMenuLabel>
-                  {quick.map((model) => (
+                  {models.map((model) => (
                     <DropdownMenuRadioItem
                       key={getModelKey(model)}
                       value={getModelKey(model)}
@@ -226,46 +192,13 @@ export function ModelSelect({
         )}
 
         <DropdownMenuSeparator />
-        <DropdownMenuLabel>Modelos rápidos</DropdownMenuLabel>
-
-        {groups.length === 0 ? (
-          <p className="px-2 py-1.5 text-xs text-muted-foreground">
-            Nenhum modelo disponível.
-          </p>
-        ) : (
-          groups.map(({ provider, models }) => (
-            <DropdownMenuGroup key={provider.id}>
-              <DropdownMenuLabel>{provider.name}</DropdownMenuLabel>
-              {models.map((model) => {
-                const key = getModelKey(model)
-                const isPending = pendingKeys.includes(key)
-
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={key}
-                    checked={isInstantModelEnabled(model, preferences)}
-                    onCheckedChange={(checked) => {
-                      void handleToggle(model, checked)
-                    }}
-                    disabled={isPending}
-                    closeOnClick={false}
-                  >
-                    {isPending && (
-                      <Loader2 className="size-3 animate-spin text-muted-foreground" />
-                    )}
-                    <span className="truncate">{model.name}</span>
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-            </DropdownMenuGroup>
-          ))
-        )}
-
-        {error && (
-          <p role="alert" className="px-2 py-1.5 text-xs text-destructive">
-            {error}
-          </p>
-        )}
+        <DropdownMenuItem
+          render={<Link href="/providers/select-model" />}
+          closeOnClick
+        >
+          <SlidersHorizontal />
+          Selecionar modelos
+        </DropdownMenuItem>
 
         {providers.length === 0 && (
           <p className="px-2 py-1.5 text-xs text-muted-foreground">

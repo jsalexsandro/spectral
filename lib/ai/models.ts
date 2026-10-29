@@ -6,7 +6,7 @@ import {
   type ProviderId,
 } from "./providers"
 
-export const MODEL_CATALOG_VERSION = 2
+export const MODEL_CATALOG_VERSION = 3
 
 export const modelStatuses = ["available", "preview", "deprecated"] as const
 export type ModelStatus = (typeof modelStatuses)[number]
@@ -165,6 +165,22 @@ const modelCatalog = [
     status: "available",
   },
   {
+    id: "gemini-3.1-flash-lite",
+    provider: "google",
+    name: "Gemini 3.1 Flash-Lite",
+    description:
+      "Modelo multimodal de baixa latência e baixo custo do Google, otimizado para tarefas de alto volume, tradução e processamento de dados.",
+    releasedAt: "2026-05-07",
+    contextWindow: 1_048_576,
+    maxOutputTokens: 65_536,
+    pricing: {
+      currency: "USD",
+      inputPerMillion: 0.25,
+      outputPerMillion: 1.5,
+    },
+    status: "available",
+  },
+  {
     id: "gemini-2.5-flash",
     provider: "google",
     name: "Gemini 2.5 Flash",
@@ -277,7 +293,7 @@ const modelCatalog = [
     status: "available",
   },
   {
-    id: "qwen/qwen3-235b-a22b",
+    id: "xingchen-agi/xing4.0-29b-a4b:free",
     provider: "openrouter",
     name: "Qwen3 235B A22B (OpenRouter)",
     description:
@@ -328,6 +344,25 @@ export function getModel(
 
 export function getModelKey(model: Pick<AIModel, "provider" | "id">): string {
   return `${model.provider}:${model.id}`
+}
+
+export function parseModelKey(
+  value: string,
+): { provider: ProviderId; modelId: string } | null {
+  const separator = value.indexOf(":")
+
+  if (separator <= 0 || separator === value.length - 1) {
+    return null
+  }
+
+  const provider = value.slice(0, separator)
+  const modelId = value.slice(separator + 1)
+
+  if (!isProviderId(provider) || !modelId) {
+    return null
+  }
+
+  return { provider, modelId }
 }
 
 export function getProviderModelsCatalog(): readonly ProviderModelCatalog[] {
