@@ -2,8 +2,32 @@
 
 import { useState } from "react"
 import { signOut } from "next-auth/react"
-import { PanelLeft, Settings, Info, LogOut } from "lucide-react"
+import {
+  PanelLeft,
+  Settings,
+  Info,
+  LogOut,
+  MessageSquarePlus,
+  Search,
+} from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,8 +35,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useChatSession } from "./chat-provider"
+import { ConfigComponent } from "./config-component"
+import { OptionComponent } from "./option-component"
 
 type SidebarUser = {
   name?: string | null
@@ -33,6 +61,19 @@ function getInitials(user: SidebarUser) {
 
 export function AppSidebar({ user }: { user: SidebarUser }) {
   const [open, setOpen] = useState(true)
+  const [configOpen, setConfigOpen] = useState(false)
+  const [signOutOpen, setSignOutOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const { startNewChat } = useChatSession()
+
+  function handleSearchOpenChange(nextOpen: boolean) {
+    setSearchOpen(nextOpen)
+
+    if (!nextOpen) {
+      setSearchQuery("")
+    }
+  }
   const displayName = user.name?.trim() || user.email || "Usuário"
 
   return (
@@ -68,7 +109,21 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
         </span>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-2" />
+      <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+        <OptionComponent
+          icon={MessageSquarePlus}
+          label="Novo Chat"
+          active
+          collapsed={!open}
+          onClick={startNewChat}
+        />
+        <OptionComponent
+          icon={Search}
+          label="Pesquisar"
+          collapsed={!open}
+          onClick={() => setSearchOpen(true)}
+        />
+      </div>
 
       <footer className="border-t border-border p-2">
         <DropdownMenu>
@@ -106,7 +161,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
             sideOffset={8}
             className={cn(!open && "ml-4")}
           >
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setConfigOpen(true)}>
               <Settings />
               Configurações
             </DropdownMenuItem>
@@ -117,9 +172,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onSelect={() => {
-                void signOut({ redirectTo: "/login" })
-              }}
+              onClick={() => setSignOutOpen(true)}
             >
               <LogOut />
               Sair
@@ -127,6 +180,63 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </footer>
+
+      <ConfigComponent
+        open={configOpen}
+        onOpenChange={setConfigOpen}
+        user={user}
+      />
+
+      <Dialog open={searchOpen} onOpenChange={handleSearchOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pesquisar chat</DialogTitle>
+            <DialogDescription>
+              Digite o nome do chat que você procura.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="relative">
+            <Search
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Nome do chat..."
+              aria-label="Nome do chat"
+              autoFocus
+              className="h-11 pl-9"
+            />
+          </div>
+          {searchQuery.trim() && (
+            <p className="text-sm text-muted-foreground">
+              Nenhum chat encontrado para “{searchQuery.trim()}”.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sair da conta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você precisará entrar novamente para acessar o painel.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                void signOut({ redirectTo: "/login" })
+              }}
+            >
+              Sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   )
 }

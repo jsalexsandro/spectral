@@ -63,13 +63,34 @@ O necessario para o inicio da aplicação.
 - [x] [sidebar-component] [main-component]
 - [x] no sidebar:
   - [x] Header com o nome Spectral e ao lado o icone de abrir e fechar a sidebar
-  - [ ] OptionComponent
+  - [x] OptionComponent
         - Novo Chat (estado inicial do /app) ao entrar no site estamos nessa oção inicial por padrão. 
+        - Pesquisar (não é bem uma opção e sim botão) ele deve abrir um modal com um input, digite o nome do chat... (o component aplicar um blur no fundo)
   - [x] Footer com o o card de user: [Avatar: nome]
     - [x] ao clicar deve abrir um context menu, com duas opções por enquanto:
-      - [x] Configurações
+      - [x] Configurações (modal de configurações) ConfigComponent
       - [x] Saiba Mais
-      - [ ] Sair (logout)
+      - [x] Sair (logout) Modal de confirmação
 - [x] no main:
 - [x] Header: Olá, {nome}
 - [x] ChatComponent
+
+
+   ChatComponent:
+    Um inputchat, o principal component e o que mais será usado.
+    Regras basicas:
+      1. Não ter overflow (scrrol), a usar o shift-enter o component vai crescendo
+      2. Não é um input comum, pois ele tem botões nas suas laterais.
+    SelectComponent proximo ao botão de send, para selecionar Modelos
+
+  ConfigComponent:
+  Um modal de configurações da site
+  [sidebar] - [content]
+
+  sidebar: (Opções)
+  1. Geral
+    Aparencia
+    Tema [sytem, light, dark]
+
+  2. Conta
+  3. Chave de Api

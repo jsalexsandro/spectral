@@ -33,7 +33,7 @@ npm run typecheck
 
 O tema **Spectral Emerald** usa branco e off-whites esverdeados como base, com
 esmeralda como cor de ação. Os tokens ficam em `app/globals.css`, e o tema
-escuro já está preparado para um toggle futuro.
+claro/escuro/sistema é controlado em Configurações → Geral → Aparência.
 
 ## Backend (Passo 2)
 - DrizzleORM configurado com PostgreSQL

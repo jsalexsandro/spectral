@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import "./globals.css";
+
+const themeScript = `(function(){try{var t=localStorage.getItem("spectral-theme")||"system";var d=t==="dark"||(t==="system"&&window.matchMedia("(prefers-color-scheme: dark)").matches);document.documentElement.classList.toggle("dark",d);document.documentElement.style.colorScheme=d?"dark":"light"}catch(e){}})()`;
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -26,14 +29,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
+      suppressHydrationWarning
       className={cn(
         "h-full antialiased",
         geistSans.variable,
         geistMono.variable,
       )}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="flex min-h-full flex-col">
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

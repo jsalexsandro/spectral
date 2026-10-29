@@ -8,7 +8,7 @@ Documentação visual do Spectral AI.
 - Ação: `emerald-700` (#047857); foco: `emerald-600` (#059669).
 - Texto: #0B1F17; apoio: #5B6B63; bordas: #E3EBE6; superfícies: #F4F8F6.
 - Radius base: `0.625rem`.
-- Dark mode: tokens preparados, sem toggle nesta etapa.
+- Dark mode: tema `system`, `light` e `dark` em Configurações → Geral → Aparência.
 
 ## Tipografia
 
