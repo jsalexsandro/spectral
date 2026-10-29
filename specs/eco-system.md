@@ -168,3 +168,11 @@ Passo 4 (o basico do funcionamento dos chats)
 
 passo 5
 tools e system prompt
+agentic loop
+
+ui generative
+ex: quero adicionar um novo modelo, ai com ui generativa ele vai abrir um tela para vc escolher o modelo, caso eu passo o model ele nem abre a janela, faz direto.
+
+ex: quero configurar um novo provedor, ele vai abrir um tela pra você colocar o provedor, ai depois abre mais uma pedindo a key. ele salva e da um feedback
+
+ui generativa
