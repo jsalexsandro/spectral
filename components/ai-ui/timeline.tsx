@@ -1,0 +1,60 @@
+import { Check, Circle, CircleDot } from "lucide-react"
+import type { TimelineProps } from "@/lib/ai/ui/catalog"
+import { cn } from "@/lib/utils"
+
+const statusStyles = {
+  done: {
+    icon: Check,
+    marker: "border-primary bg-primary text-primary-foreground",
+    title: "text-foreground",
+  },
+  current: {
+    icon: CircleDot,
+    marker: "border-primary bg-background text-primary",
+    title: "text-foreground",
+  },
+  pending: {
+    icon: Circle,
+    marker: "border-border bg-background text-muted-foreground",
+    title: "text-muted-foreground",
+  },
+} as const
+
+export function Timeline({ title, items }: TimelineProps) {
+  return (
+    <div className="space-y-3">
+      {title && (
+        <p className="text-sm font-medium text-foreground">{title}</p>
+      )}
+      <ol className="space-y-3">
+        {items.map((item, index) => {
+          const style = statusStyles[item.status]
+          const Icon = style.icon
+
+          return (
+            <li key={`${item.title}-${index}`} className="flex gap-3">
+              <span
+                className={cn(
+                  "flex size-6 shrink-0 items-center justify-center rounded-full border",
+                  style.marker,
+                )}
+              >
+                <Icon className="size-3" />
+              </span>
+              <div className="min-w-0 space-y-0.5 pt-0.5">
+                <p className={cn("text-sm font-medium", style.title)}>
+                  {item.title}
+                </p>
+                {item.description && (
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {item.description}
+                  </p>
+                )}
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
+}

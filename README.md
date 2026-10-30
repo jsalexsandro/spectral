@@ -67,6 +67,15 @@ claro/escuro/sistema é controlado em Configurações → Geral → Aparência.
 - Rotas: `GET /api/instant-models` e `PUT /api/instant-models`
 - Apenas modelos dos provedores com chave BYOK configurada entram na seleção rápida; sem nenhuma chave, o catálogo completo continua disponível como fallback
 
+## Generative UI (Passo 7)
+- A IA pode renderizar componentes estruturados no chat com a tool `renderUi`
+- Catálogo versionado em `lib/ai/ui/catalog.ts` (`UI_CATALOG_VERSION = 1`)
+- Componentes: callout, infoCard, statGrid, dataTable, timeline e sourceList
+- Registry e renderer em `components/ai-ui/`, com validação Zod e estados loading/waiting/success/error
+- As interfaces são recuperadas do histórico via `Message.parts` (jsonb), sem migração adicional
+- Galeria visual em `/styleguide#generative-ui`
+- Referência técnica em `specs/ui-generative-components.md`
+
 ### Variáveis de ambiente
 - `DATABASE_URL` — string de conexão PostgreSQL
 - `AUTH_SECRET` — segredo do Auth.js

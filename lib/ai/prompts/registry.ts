@@ -1,4 +1,4 @@
-export const SYSTEM_PROMPT_VERSION = 2
+export const SYSTEM_PROMPT_VERSION = 3
 
 export type SystemPromptChange = {
   version: number
@@ -18,5 +18,11 @@ export const systemPromptChangelog: readonly SystemPromptChange[] = [
     date: "2026-10-30",
     summary:
       "Anuncia a tool nativa fetchUrl e orienta uso responsável, citação da fonte e limites de rede.",
+  },
+  {
+    version: 3,
+    date: "2026-10-30",
+    summary:
+      "Anuncia a tool renderUi, o catálogo de componentes generativos e as regras de uso, citação e não duplicação de dados.",
   },
 ]

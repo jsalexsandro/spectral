@@ -43,6 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { GenerativeUiGallery } from "./generative-ui-gallery";
 
 export const metadata: Metadata = {
   title: "Design system",
@@ -506,6 +507,16 @@ export default function StyleguidePage() {
             </div>
           </div>
         </div>
+      </Section>
+
+      <Separator />
+
+      <Section
+        id="generative-ui"
+        title="Generative UI"
+        description="Componentes que a IA pode renderizar no chat e os estados do renderer."
+      >
+        <GenerativeUiGallery />
       </Section>
 
       <Separator />

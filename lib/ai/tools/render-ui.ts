@@ -10,7 +10,7 @@ const description = [
   "Prefira esta ferramenta quando dados tabulares, métricas, etapas, fontes ou um destaque visual comunicarem melhor do que texto corrido.",
   "Componentes permitidos:",
   uiCatalogSummary,
-  "Regras: use no máximo dois blocos por resposta; não repita no texto os mesmos dados exibidos no componente; use `sourceList` somente com URLs reais já consultadas.",
+  "Regras: use no máximo dois blocos por resposta; não repita no texto os mesmos dados exibidos no componente; use `sourceList` somente com URLs reais já consultadas; nunca invente dados apenas para preencher o componente.",
 ].join("\n")
 
 export const renderUiTool = tool({

@@ -2,6 +2,8 @@ import { z } from "zod"
 
 export const UI_CATALOG_VERSION = 1
 
+export const RENDER_UI_TOOL_NAME = "renderUi" as const
+
 const boundedText = (max: number) => z.string().trim().min(1).max(max)
 const optionalText = (max: number) => z.string().trim().min(1).max(max).optional()
 
@@ -99,6 +101,10 @@ export const uiComponentNames = [
 ] as const
 
 export type UiComponentName = (typeof uiComponentNames)[number]
+
+export function isUiComponentName(value: string): value is UiComponentName {
+  return (uiComponentNames as readonly string[]).includes(value)
+}
 
 export const uiComponentDescriptions: Record<UiComponentName, string> = {
   callout:

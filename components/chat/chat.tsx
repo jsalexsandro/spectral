@@ -12,12 +12,14 @@ import {
 } from "ai"
 import { ArrowUp, Globe, Loader2, Paperclip, Square, X } from "lucide-react"
 import { useChatSession } from "@/app/app/chat-provider"
+import { RenderUiPart } from "@/components/ai-ui"
 import {
   resolveDefaultModelKey,
   type InstantModelPreference,
 } from "@/lib/ai/instant-models"
 import { aiModels, getModelKey } from "@/lib/ai/models"
 import type { ProviderId } from "@/lib/ai/providers"
+import { RENDER_UI_TOOL_NAME } from "@/lib/ai/ui/catalog"
 import { MarkdownMessage } from "./markdown-message"
 import { ModelSelect } from "./model-select"
 
@@ -268,12 +270,14 @@ function ChatSession({
                         }
 
                         if (isToolUIPart(part)) {
-                          return (
-                            <ToolPartCard
-                              key={part.toolCallId ?? `${item.id}-tool-${index}`}
-                              part={part}
-                            />
-                          )
+                          const toolKey =
+                            part.toolCallId ?? `${item.id}-tool-${index}`
+
+                          if (getToolName(part) === RENDER_UI_TOOL_NAME) {
+                            return <RenderUiPart key={toolKey} part={part} />
+                          }
+
+                          return <ToolPartCard key={toolKey} part={part} />
                         }
 
                         return null

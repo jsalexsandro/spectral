@@ -202,22 +202,27 @@ Passo 5:
 Passo 7 — Generative UI
 Aqui começa uma das funcionalidades mais interessantes do Spectral.
 
+Referência técnica completa: [`specs/ui-generative-components.md`](./ui-generative-components.md)
+
 Criar uma camada de componentes dinâmicos que podem ser apresentados pela IA dentro da conversa.
 
-Existiram dois tipos de components
-Existiram dois tipos de component:
+Existiram dois tipos de components:
 1. Components a nivel de chat (aparecem no chat)
 2. Components a nivel de aplicação (aparecem na ui do site, na aplicação inteira)
 
 (Inicialmente implementaremos apenas o tipo 01)
 
 Sugestão de implementação:
-- [ ] Criar components/ai-ui/.
-- [ ] Criar registro de componentes permitidos.
-- [ ] Criar mecanismo de identificação das chamadas de UI.
-- [ ] Criar renderizador de componentes.
-- [ ] Implementar estados: loading, success, error e waiting.
-- [ ] Persistir os dados necessários para recuperar as interfaces no histórico.
+- [x] Criar components/ai-ui/.
+- [x] Criar registro de componentes permitidos (`components/ai-ui/registry.tsx`).
+- [x] Criar mecanismo de identificação das chamadas de UI (`RENDER_UI_TOOL_NAME` + `getToolName`).
+- [x] Criar renderizador de componentes (`components/ai-ui/render-ui-part.tsx`).
+- [x] Implementar estados: loading, success, error e waiting.
+- [x] Persistir os dados necessários para recuperar as interfaces no histórico (`Message.parts`).
+- [x] Catálogo versionado `UI_CATALOG_VERSION = 1` com 6 componentes (callout, infoCard, statGrid, dataTable, timeline, sourceList).
+- [x] Tool `renderUi` registrada em `getChatTools()` e anunciada no system prompt v3.
+- [x] Validação Zod no servidor e revalidação no cliente antes de renderizar.
+- [x] Galeria de validação visual em `/styleguide#generative-ui`.
 
 
 
