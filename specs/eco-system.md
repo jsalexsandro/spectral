@@ -204,6 +204,13 @@ Aqui começa uma das funcionalidades mais interessantes do Spectral.
 
 Criar uma camada de componentes dinâmicos que podem ser apresentados pela IA dentro da conversa.
 
+Existiram dois tipos de components
+Existiram dois tipos de component:
+1. Components a nivel de chat (aparecem no chat)
+2. Components a nivel de aplicação (aparecem na ui do site, na aplicação inteira)
+
+(Inicialmente implementaremos apenas o tipo 01)
+
 Sugestão de implementação:
 - [ ] Criar components/ai-ui/.
 - [ ] Criar registro de componentes permitidos.
@@ -211,6 +218,8 @@ Sugestão de implementação:
 - [ ] Criar renderizador de componentes.
 - [ ] Implementar estados: loading, success, error e waiting.
 - [ ] Persistir os dados necessários para recuperar as interfaces no histórico.
+
+
 
 
   
