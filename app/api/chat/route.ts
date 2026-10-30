@@ -1,14 +1,11 @@
 import {
-  convertToModelMessages,
-  createUIMessageStreamResponse,
-  isStepCount,
+  createAgentUIStreamResponse,
   safeValidateUIMessages,
-  streamText,
-  toUIMessageStream,
   type UIMessage,
 } from "ai"
 import { createId } from "@paralleldrive/cuid2"
 import { auth } from "@/auth"
+import { createSpectralAgent } from "@/lib/ai/agents/spectral-agent"
 import { resolveChatModel } from "@/lib/ai/chat-model"
 import {
   ensureOwnedChat,
@@ -19,14 +16,17 @@ import {
 } from "@/lib/ai/chat-service"
 import { parseModelKey } from "@/lib/ai/models"
 import { buildSystemPrompt } from "@/lib/ai/prompts"
-import { getChatTools } from "@/lib/ai/tools"
 import { sendChatMessageSchema } from "@/lib/validations/chat"
+
+export const maxDuration = 120
 
 const modelErrorStatus = {
   unknown_model: 400,
   model_disabled: 403,
   missing_api_key: 403,
 } as const
+
+const AGENT_TIMEOUT_MS = 120_000
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -132,27 +132,44 @@ export async function POST(request: Request) {
       },
     })
 
-    const result = streamText({
+    const agent = createSpectralAgent({
       model: resolved.model,
-      system: systemPrompt.prompt,
-      tools: getChatTools(),
-      stopWhen: isStepCount(4),
-      messages: await convertToModelMessages(
-        messages.map((message) => ({
-          role: message.role,
-          parts: message.parts,
-        })),
-      ),
+      instructions: systemPrompt.prompt,
+      runtimeContext: {
+        userId: session.user.id,
+        chatId,
+        startedAt: Date.now(),
+      },
     })
 
-    const stream = toUIMessageStream({
-      stream: result.stream,
+    let inputTokens = 0
+    let outputTokens = 0
+    let stepCount = 0
+
+    return await createAgentUIStreamResponse({
+      agent,
+      uiMessages: messages,
       originalMessages: messages,
       generateMessageId: () => createId(),
+      abortSignal: request.signal,
+      timeout: { totalMs: AGENT_TIMEOUT_MS },
       onError: () => "Não foi possível gerar a resposta.",
-      onEnd: async ({ responseMessage }) => {
+      onStepEnd: (step) => {
+        stepCount += 1
+        inputTokens += step.usage.inputTokens ?? 0
+        outputTokens += step.usage.outputTokens ?? 0
+
+        console.info("agent_step_end", {
+          chatId,
+          step: stepCount,
+          finishReason: step.finishReason,
+          inputTokens: step.usage.inputTokens,
+          outputTokens: step.usage.outputTokens,
+          toolCalls: step.toolCalls.map((call) => call.toolName),
+        })
+      },
+      onEnd: async ({ responseMessage, isAborted, outcome }) => {
         try {
-          const usage = await result.usage
           const responseText = getMessageText(responseMessage)
 
           if (!responseText && responseMessage.parts.length === 0) {
@@ -168,17 +185,22 @@ export async function POST(request: Request) {
             provider: modelKey.provider,
             modelId: modelKey.modelId,
             promptVersion: systemPrompt.version,
-            inputTokens: usage.inputTokens ?? null,
-            outputTokens: usage.outputTokens ?? null,
+            inputTokens: inputTokens || null,
+            outputTokens: outputTokens || null,
           })
           await touchChat(chatId)
+
+          console.info("agent_end", {
+            chatId,
+            steps: stepCount,
+            aborted: isAborted,
+            outcome: outcome.status,
+          })
         } catch (error) {
           console.error("Falha ao salvar resposta do assistente:", error)
         }
       },
     })
-
-    return createUIMessageStreamResponse({ stream })
   } catch {
     return Response.json({ error: "internal_error" }, { status: 500 })
   }

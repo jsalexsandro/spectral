@@ -1,4 +1,5 @@
 import type { PromptSection } from "../types"
+import { agentLoopSection } from "./agent-loop"
 import { capabilitiesSection } from "./capabilities"
 import { generativeUiSection } from "./generative-ui"
 import { identitySection } from "./identity"
@@ -10,6 +11,7 @@ export const promptSections: readonly PromptSection[] = [
   identitySection,
   styleSection,
   capabilitiesSection,
+  agentLoopSection,
   generativeUiSection,
   safetySection,
   userContextSection,

@@ -168,11 +168,11 @@ Passo 4 (o basico do funcionamento dos chats)
 Passo 5:
 - System prompt básico (definição do sistema de prompts internos)
   Isso deve ser bem construido pois com a evolução do sistema, os system prompts vão evoluindo para se adequar ao user!!
-  #### System prompt v2 (`SYSTEM_PROMPT_VERSION = 2`)
+  #### System prompt v4 (`SYSTEM_PROMPT_VERSION = 4`)
 
   Referências:
   - Composição: `lib/ai/prompts/build.ts` (`buildSystemPrompt`)
-  - Seções: `lib/ai/prompts/sections/` (identidade, estilo, capacidades, segurança, contexto do usuário)
+  - Seções: `lib/ai/prompts/sections/` (identidade, estilo, capacidades, loop agêntico, interfaces generativas, segurança, contexto do usuário)
   - Versão e changelog: `lib/ai/prompts/registry.ts`
   - Injeção: `app/api/chat/route.ts`
   - Persistência: `Message.promptVersion`
@@ -189,14 +189,25 @@ Passo 5:
   - [x] Camada de tools em `lib/ai/tools/` com registro `getChatTools()`
 
   - [x] Proteções: timeout, limite de resposta, bloqueio de localhost/IPs privados e revalidação de redirects (SSRF)
-  - [x] Multi-step no `/api/chat` (`isStepCount(4)`)
+  - [x] Loop agêntico no `/api/chat` com `ToolLoopAgent`, até 12 passos e budget de tokens
+  - [x] Tool `updatePlan` com timeline expansível em `components/chat/agent-activity.tsx`
+  - [x] Poda de contexto em `prepareStep` com `pruneMessages`
   - [x] Renderização das tool parts no chat (`components/chat/chat.tsx`)
-  - [x] System prompt v2 anuncia a tool e orienta citação da fonte e limites
+  - [x] System prompt v4 anuncia as tools e orienta planejamento, citação da fonte e limites
 
 
   todas tools:
     - [x] Tool nativa: Requisição de api [fetch] (`fetchUrl`, GET/POST)
+    - [x] Tool nativa: Planejamento visível (`updatePlan`)
     - [x] Formatação nativa das respostas em markdown (`components/chat/markdown-message.tsx`, `react-markdown` + `remark-gfm`)
+
+
+Loop agêntico
+- Agente: `lib/ai/agents/spectral-agent.ts` (`ToolLoopAgent`, `isStepCount(12)` + budget de tokens)
+- Plano: `lib/ai/tools/update-plan.ts` e `lib/ai/plan.ts`
+- Timeline: `components/chat/agent-activity.tsx` e `components/chat/agent-plan.tsx`
+- Persistência: `Message.parts` (jsonb), sem migração adicional
+- Rota: `app/api/chat/route.ts` usa `createAgentUIStreamResponse` e acumula usage por passo
 
 
 Passo 7 — Generative UI

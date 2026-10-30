@@ -1,4 +1,4 @@
-export const SYSTEM_PROMPT_VERSION = 3
+export const SYSTEM_PROMPT_VERSION = 4
 
 export type SystemPromptChange = {
   version: number
@@ -24,5 +24,11 @@ export const systemPromptChangelog: readonly SystemPromptChange[] = [
     date: "2026-10-30",
     summary:
       "Anuncia a tool renderUi, o catálogo de componentes generativos e as regras de uso, citação e não duplicação de dados.",
+  },
+  {
+    version: 4,
+    date: "2026-10-30",
+    summary:
+      "Adiciona execução em etapas com a tool updatePlan, planejamento antes de tarefas multi-passo e replanejamento após falhas.",
   },
 ]

@@ -67,6 +67,14 @@ claro/escuro/sistema é controlado em Configurações → Geral → Aparência.
 - Rotas: `GET /api/instant-models` e `PUT /api/instant-models`
 - Apenas modelos dos provedores com chave BYOK configurada entram na seleção rápida; sem nenhuma chave, o catálogo completo continua disponível como fallback
 
+## Loop agêntico
+- O chat usa `ToolLoopAgent` (`lib/ai/agents/spectral-agent.ts`) com até 12 passos por mensagem
+- A tool `updatePlan` cria e atualiza o plano exibido na timeline expansível do chat
+- `prepareStep` poda chamadas de ferramentas antigas quando o contexto cresce
+- Um budget de tokens interrompe execuções longas antes de virarem custo excessivo
+- O prompt v4 adiciona a seção `agent-loop` com as regras de planejar, executar, observar e replanejar
+- As etapas são recuperadas do histórico via `Message.parts`, sem migração adicional
+
 ## Generative UI (Passo 7)
 - A IA pode renderizar componentes estruturados no chat com a tool `renderUi`
 - Catálogo versionado em `lib/ai/ui/catalog.ts` (`UI_CATALOG_VERSION = 1`)

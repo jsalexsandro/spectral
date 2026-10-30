@@ -6,11 +6,9 @@ import {
   DefaultChatTransport,
   getToolName,
   isToolUIPart,
-  type DynamicToolUIPart,
-  type ToolUIPart,
   type UIMessage,
 } from "ai"
-import { ArrowUp, Globe, Loader2, Paperclip, Square, X } from "lucide-react"
+import { ArrowUp, Loader2, Paperclip, Square } from "lucide-react"
 import { useChatSession } from "@/app/app/chat-provider"
 import { RenderUiPart } from "@/components/ai-ui"
 import {
@@ -20,6 +18,7 @@ import {
 import { aiModels, getModelKey } from "@/lib/ai/models"
 import type { ProviderId } from "@/lib/ai/providers"
 import { RENDER_UI_TOOL_NAME } from "@/lib/ai/ui/catalog"
+import { AgentActivity } from "./agent-activity"
 import { MarkdownMessage } from "./markdown-message"
 import { ModelSelect } from "./model-select"
 
@@ -44,70 +43,6 @@ function getMessageText(message: UIMessage): string {
     .map((part) => part.text)
     .join("")
     .trim()
-}
-
-function getToolUrl(part: ToolUIPart | DynamicToolUIPart): string | null {
-  const input: unknown = part.input
-
-  if (typeof input !== "object" || input === null) {
-    return null
-  }
-
-  const url = (input as { url?: unknown }).url
-
-  return typeof url === "string" ? url : null
-}
-
-function getDisplayHost(url: string): string {
-  try {
-    return new URL(url).host
-  } catch {
-    return url
-  }
-}
-
-function ToolPartCard({ part }: { part: ToolUIPart | DynamicToolUIPart }) {
-  if (getToolName(part) !== "fetchUrl") {
-    return null
-  }
-
-  const url = getToolUrl(part)
-  const host = url ? getDisplayHost(url) : null
-  const isError = part.state === "output-error"
-  const isPending =
-    part.state === "input-streaming" ||
-    part.state === "input-available" ||
-    part.state === "approval-requested" ||
-    part.state === "approval-responded"
-
-  return (
-    <div className="flex items-start gap-2 rounded-lg border border-border/70 bg-background/50 px-2.5 py-2 text-xs">
-      {isPending ? (
-        <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin text-muted-foreground" />
-      ) : isError ? (
-        <X className="mt-0.5 size-3.5 shrink-0 text-destructive" />
-      ) : (
-        <Globe className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-      )}
-      <div className="min-w-0">
-        <p className="font-medium">
-          {isPending
-            ? "Consultando"
-            : isError
-              ? "Falha ao consultar"
-              : "Consultou"}
-          {host && (
-            <span className="font-normal text-muted-foreground"> {host}</span>
-          )}
-        </p>
-        {isError && part.errorText && (
-          <p className="mt-0.5 break-words text-muted-foreground">
-            {part.errorText}
-          </p>
-        )}
-      </div>
-    </div>
-  )
 }
 
 export function Chat({
@@ -235,12 +170,16 @@ function ChatSession({
       {hasMessages ? (
         <div className="flex-1 overflow-y-auto px-4 py-8">
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-            {messages.map((item) => {
+            {messages.map((item, messageIndex) => {
               const text = getMessageText(item)
               const hasToolParts = item.parts.some((part) =>
                 isToolUIPart(part),
               )
               const isUser = item.role === "user"
+              const isStreaming =
+                status === "streaming" &&
+                messageIndex === messages.length - 1 &&
+                !isUser
 
               if (!text && !hasToolParts && item.role === "assistant") {
                 return null
@@ -259,6 +198,10 @@ function ChatSession({
                     text
                   ) : (
                     <div className="flex flex-col gap-2">
+                      <AgentActivity
+                        parts={item.parts}
+                        isStreaming={isStreaming}
+                      />
                       {item.parts.map((part, index) => {
                         if (part.type === "text" && part.text.trim()) {
                           return (
@@ -269,15 +212,16 @@ function ChatSession({
                           )
                         }
 
-                        if (isToolUIPart(part)) {
-                          const toolKey =
-                            part.toolCallId ?? `${item.id}-tool-${index}`
-
-                          if (getToolName(part) === RENDER_UI_TOOL_NAME) {
-                            return <RenderUiPart key={toolKey} part={part} />
-                          }
-
-                          return <ToolPartCard key={toolKey} part={part} />
+                        if (
+                          isToolUIPart(part) &&
+                          getToolName(part) === RENDER_UI_TOOL_NAME
+                        ) {
+                          return (
+                            <RenderUiPart
+                              key={part.toolCallId ?? `${item.id}-tool-${index}`}
+                              part={part}
+                            />
+                          )
                         }
 
                         return null
