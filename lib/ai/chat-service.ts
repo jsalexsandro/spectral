@@ -82,6 +82,7 @@ type SaveMessageInput = {
   parts: UIMessage["parts"]
   provider?: ProviderId | null
   modelId?: string | null
+  promptVersion?: number | null
   inputTokens?: number | null
   outputTokens?: number | null
 }
@@ -94,6 +95,7 @@ export async function saveChatMessage({
   parts,
   provider = null,
   modelId = null,
+  promptVersion = null,
   inputTokens = null,
   outputTokens = null,
 }: SaveMessageInput): Promise<void> {
@@ -107,6 +109,7 @@ export async function saveChatMessage({
       parts,
       provider,
       model: modelId,
+      promptVersion,
       inputTokens,
       outputTokens,
     })

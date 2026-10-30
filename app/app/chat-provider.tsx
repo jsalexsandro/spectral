@@ -42,6 +42,7 @@ type ChatContextValue = {
   refreshChats: () => Promise<void>
   markChatPersisted: () => void
   deleteChat: (id: string) => Promise<boolean>
+  renameChat: (id: string, title: string) => Promise<void>
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
@@ -217,12 +218,41 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           return createDraftChat()
         })
 
-        return true
+    return true
+  } catch {
+    return false
+  }
+  },
+  [],
+  )
+
+  const renameChat = useCallback(
+    async (id: string, title: string) => {
+      try {
+        const response = await fetch(`/api/chats/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+        })
+
+        if (!response.ok) {
+          return
+        }
+
+        setChats((current) =>
+          current.map((chat) =>
+            chat.id === id ? { ...chat, title } : chat,
+          ),
+        )
+
+        if (active.chatId === id) {
+          setActive((current) => ({ ...current, chatId: current.chatId }))
+        }
       } catch {
-        return false
+        // swallow
       }
     },
-    [],
+    [active.chatId],
   )
 
   const value = useMemo(
@@ -240,6 +270,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       refreshChats,
       markChatPersisted,
       deleteChat,
+      renameChat,
     }),
     [
       active,
@@ -251,6 +282,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       refreshChats,
       markChatPersisted,
       deleteChat,
+      renameChat,
     ],
   )
 

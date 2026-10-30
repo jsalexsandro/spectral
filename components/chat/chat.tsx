@@ -2,8 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useChat } from "@ai-sdk/react"
-import { DefaultChatTransport, type UIMessage } from "ai"
-import { ArrowUp, Loader2, Paperclip, Square } from "lucide-react"
+import {
+  DefaultChatTransport,
+  getToolName,
+  isToolUIPart,
+  type DynamicToolUIPart,
+  type ToolUIPart,
+  type UIMessage,
+} from "ai"
+import { ArrowUp, Globe, Loader2, Paperclip, Square, X } from "lucide-react"
 import { useChatSession } from "@/app/app/chat-provider"
 import {
   resolveDefaultModelKey,
@@ -11,6 +18,7 @@ import {
 } from "@/lib/ai/instant-models"
 import { aiModels, getModelKey } from "@/lib/ai/models"
 import type { ProviderId } from "@/lib/ai/providers"
+import { MarkdownMessage } from "./markdown-message"
 import { ModelSelect } from "./model-select"
 
 type ChatProps = {
@@ -34,6 +42,70 @@ function getMessageText(message: UIMessage): string {
     .map((part) => part.text)
     .join("")
     .trim()
+}
+
+function getToolUrl(part: ToolUIPart | DynamicToolUIPart): string | null {
+  const input: unknown = part.input
+
+  if (typeof input !== "object" || input === null) {
+    return null
+  }
+
+  const url = (input as { url?: unknown }).url
+
+  return typeof url === "string" ? url : null
+}
+
+function getDisplayHost(url: string): string {
+  try {
+    return new URL(url).host
+  } catch {
+    return url
+  }
+}
+
+function ToolPartCard({ part }: { part: ToolUIPart | DynamicToolUIPart }) {
+  if (getToolName(part) !== "fetchUrl") {
+    return null
+  }
+
+  const url = getToolUrl(part)
+  const host = url ? getDisplayHost(url) : null
+  const isError = part.state === "output-error"
+  const isPending =
+    part.state === "input-streaming" ||
+    part.state === "input-available" ||
+    part.state === "approval-requested" ||
+    part.state === "approval-responded"
+
+  return (
+    <div className="flex items-start gap-2 rounded-lg border border-border/70 bg-background/50 px-2.5 py-2 text-xs">
+      {isPending ? (
+        <Loader2 className="mt-0.5 size-3.5 shrink-0 animate-spin text-muted-foreground" />
+      ) : isError ? (
+        <X className="mt-0.5 size-3.5 shrink-0 text-destructive" />
+      ) : (
+        <Globe className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+      )}
+      <div className="min-w-0">
+        <p className="font-medium">
+          {isPending
+            ? "Consultando"
+            : isError
+              ? "Falha ao consultar"
+              : "Consultou"}
+          {host && (
+            <span className="font-normal text-muted-foreground"> {host}</span>
+          )}
+        </p>
+        {isError && part.errorText && (
+          <p className="mt-0.5 break-words text-muted-foreground">
+            {part.errorText}
+          </p>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function Chat({
@@ -163,8 +235,12 @@ function ChatSession({
           <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
             {messages.map((item) => {
               const text = getMessageText(item)
+              const hasToolParts = item.parts.some((part) =>
+                isToolUIPart(part),
+              )
+              const isUser = item.role === "user"
 
-              if (!text && item.role === "assistant") {
+              if (!text && !hasToolParts && item.role === "assistant") {
                 return null
               }
 
@@ -172,12 +248,38 @@ function ChatSession({
                 <div
                   key={item.id}
                   className={
-                    item.role === "user"
+                    isUser
                       ? "max-w-[85%] self-end rounded-2xl bg-primary px-4 py-2.5 text-sm break-words whitespace-pre-wrap text-primary-foreground"
-                      : "max-w-[85%] self-start rounded-2xl bg-muted px-4 py-2.5 text-sm break-words whitespace-pre-wrap text-foreground"
+                      : "max-w-[85%] self-start rounded-2xl bg-muted px-4 py-2.5 text-sm break-words text-foreground"
                   }
                 >
-                  {text}
+                  {isUser ? (
+                    text
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      {item.parts.map((part, index) => {
+                        if (part.type === "text" && part.text.trim()) {
+                          return (
+                            <MarkdownMessage
+                              key={`${item.id}-text-${index}`}
+                              content={part.text}
+                            />
+                          )
+                        }
+
+                        if (isToolUIPart(part)) {
+                          return (
+                            <ToolPartCard
+                              key={part.toolCallId ?? `${item.id}-tool-${index}`}
+                              part={part}
+                            />
+                          )
+                        }
+
+                        return null
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}

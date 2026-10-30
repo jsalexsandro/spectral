@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2, MessageSquare, Trash2 } from "lucide-react"
+import { Ellipsis, Loader2, MessageSquare, Pencil, Trash2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,18 +12,36 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useChatSession, type ChatSummary } from "./chat-provider"
+import { useRouter } from "next/navigation"
 
 type MyChatsProps = {
   collapsed?: boolean
 }
 
 export function MyChats({ collapsed = false }: MyChatsProps) {
-  const { chatId, isDraft, chats, chatsLoading, chatsError, openChat, deleteChat } =
-    useChatSession()
+  const {
+    chatId,
+    isDraft,
+    chats,
+    chatsLoading,
+    chatsError,
+    deleteChat,
+    renameChat,
+  } = useChatSession()
   const [pendingDelete, setPendingDelete] = useState<ChatSummary | null>(null)
+  const [renamingChatId, setRenamingChatId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState("")
+  const router = useRouter()
 
   if (collapsed) {
     return (
@@ -32,7 +50,7 @@ export function MyChats({ collapsed = false }: MyChatsProps) {
           <Tooltip key={chat.id}>
             <TooltipTrigger
               type="button"
-              onClick={() => void openChat(chat.id)}
+              onClick={() => router.push(`/chat/${chat.id}`)}
               aria-current={!isDraft && chatId === chat.id ? "page" : undefined}
               className={cn(
                 "flex size-8 items-center justify-center rounded-md transition-colors focus-visible:outline-2 focus-visible:outline-ring",
@@ -73,6 +91,7 @@ export function MyChats({ collapsed = false }: MyChatsProps) {
         <ul className="space-y-0.5">
           {chats.map((chat) => {
             const active = !isDraft && chatId === chat.id
+            const isRenaming = renamingChatId === chat.id
 
             return (
               <li
@@ -84,24 +103,83 @@ export function MyChats({ collapsed = false }: MyChatsProps) {
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                 )}
               >
-                <button
-                  type="button"
-                  onClick={() => void openChat(chat.id)}
-                  aria-current={active ? "page" : undefined}
-                  className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  <MessageSquare className="size-3.5 shrink-0" />
-                  <span className="truncate">{chat.title}</span>
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Excluir ${chat.title}`}
-                  title="Excluir chat"
-                  onClick={() => setPendingDelete(chat)}
-                  className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring hover:bg-destructive/10 hover:text-destructive"
-                >
-                  <Trash2 className="size-3.5" />
-                </button>
+                {isRenaming ? (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const value = renameValue.trim()
+                      if (value && value !== chat.title) {
+                        void renameChat(chat.id, value)
+                      }
+                      setRenamingChatId(null)
+                      setRenameValue("")
+                    }}
+                    className="flex w-full items-center gap-1 px-2 py-1.5"
+                  >
+                    <input
+                      autoFocus
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => {
+                        const value = renameValue.trim()
+                        if (value && value !== chat.title) {
+                          void renameChat(chat.id, value)
+                        }
+                        setRenamingChatId(null)
+                        setRenameValue("")
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") {
+                          e.preventDefault()
+                          setRenamingChatId(null)
+                          setRenameValue("")
+                        }
+                      }}
+                      className="min-w-0 flex-1 rounded-md bg-background px-2 py-1 text-sm font-medium ring-1 ring-border outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      placeholder={chat.title}
+                      aria-label="Novo nome do chat"
+                    />
+                  </form>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/chat/${chat.id}`)}
+                      aria-current={active ? "page" : undefined}
+                      className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-ring"
+                    >
+                      <MessageSquare className="size-3.5 shrink-0" />
+                      <span className="truncate">{chat.title}</span>
+                    </button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        aria-label={`Opções de ${chat.title}`}
+                        className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring hover:bg-accent hover:text-accent-foreground data-popup-open:opacity-100"
+                      >
+                        <Ellipsis className="size-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" side="bottom" sideOffset={4}>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setRenameValue(chat.title)
+                            setRenamingChatId(chat.id)
+                          }}
+                        >
+                          <Pencil />
+                          Renomear
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setPendingDelete(chat)}
+                        >
+                          <Trash2 />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
               </li>
             )
           })}
@@ -133,6 +211,9 @@ export function MyChats({ collapsed = false }: MyChatsProps) {
 
                 if (chat) {
                   void deleteChat(chat.id)
+                  if (!isDraft && chatId === chat.id) {
+                    router.push("/app")
+                  }
                 }
               }}
             >

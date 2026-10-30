@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { signOut } from "next-auth/react"
 import {
   PanelLeft,
@@ -69,8 +70,13 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
   const [signOutOpen, setSignOutOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const { startNewChat, openChat, chats, chatsLoading, isDraft } =
-    useChatSession()
+  const { startNewChat, chats, chatsLoading, isDraft } = useChatSession()
+  const router = useRouter()
+
+  function handleNewChat() {
+    startNewChat()
+    router.push("/app")
+  }
 
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase("pt-BR")
   const searchResults = normalizedQuery
@@ -127,7 +133,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
           label="Novo Chat"
           active={isDraft}
           collapsed={!open}
-          onClick={startNewChat}
+          onClick={handleNewChat}
         />
         <OptionComponent
           icon={Search}
@@ -240,7 +246,7 @@ export function AppSidebar({ user }: { user: SidebarUser }) {
                       <button
                         type="button"
                         onClick={() => {
-                          void openChat(chat.id)
+                          router.push(`/chat/${chat.id}`)
                           handleSearchOpenChange(false)
                         }}
                         className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-ring"

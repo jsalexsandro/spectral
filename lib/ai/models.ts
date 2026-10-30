@@ -6,7 +6,7 @@ import {
   type ProviderId,
 } from "./providers"
 
-export const MODEL_CATALOG_VERSION = 3
+export const MODEL_CATALOG_VERSION = 5
 
 export const modelStatuses = ["available", "preview", "deprecated"] as const
 export type ModelStatus = (typeof modelStatuses)[number]
@@ -213,98 +213,17 @@ const modelCatalog = [
     status: "available",
   },
   {
-    id: "openai/gpt-4o",
+    id: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
     provider: "openrouter",
-    name: "GPT-4o (OpenRouter)",
+    name: "NVIDIA: Nemotron 3 Nano Omni (free)",
     description:
-      "GPT-4o roteado pelo OpenRouter, com seleção automática de provedor.",
-    releasedAt: "2024-05-13",
-    contextWindow: 128_000,
-    maxOutputTokens: 16_384,
+      "Modelo multimodal gratuito da NVIDIA via OpenRouter, otimizado para raciocínio em texto, imagem, vídeo e áudio.",
+    releasedAt: "2026-04-28",
+    contextWindow: 262_144,
     pricing: {
       currency: "USD",
-      inputPerMillion: 2.5,
-      outputPerMillion: 10,
-    },
-    status: "available",
-  },
-  {
-    id: "anthropic/claude-sonnet-4",
-    provider: "openrouter",
-    name: "Claude Sonnet 4 (OpenRouter)",
-    description:
-      "Claude Sonnet 4 via OpenRouter para código, análise e uso geral.",
-    releasedAt: "2025-05-22",
-    contextWindow: 200_000,
-    maxOutputTokens: 64_000,
-    pricing: {
-      currency: "USD",
-      inputPerMillion: 3,
-      outputPerMillion: 15,
-    },
-    status: "available",
-  },
-  {
-    id: "google/gemini-2.5-pro",
-    provider: "openrouter",
-    name: "Gemini 2.5 Pro (OpenRouter)",
-    description:
-      "Gemini 2.5 Pro via OpenRouter para raciocínio e contexto longo.",
-    releasedAt: "2025-06-17",
-    contextWindow: 1_048_576,
-    maxOutputTokens: 65_536,
-    pricing: {
-      currency: "USD",
-      inputPerMillion: 1.25,
-      outputPerMillion: 10,
-    },
-    status: "available",
-  },
-  {
-    id: "deepseek/deepseek-r1",
-    provider: "openrouter",
-    name: "DeepSeek R1 (OpenRouter)",
-    description:
-      "Modelo de raciocínio da DeepSeek disponível pelo OpenRouter.",
-    releasedAt: "2025-01-20",
-    contextWindow: 163_840,
-    maxOutputTokens: 16_384,
-    pricing: {
-      currency: "USD",
-      inputPerMillion: 0.55,
-      outputPerMillion: 2.19,
-    },
-    status: "available",
-  },
-  {
-    id: "meta-llama/llama-3.3-70b-instruct",
-    provider: "openrouter",
-    name: "Llama 3.3 70B (OpenRouter)",
-    description:
-      "Meta Llama 3.3 70B Instruct via OpenRouter, aberto e econômico.",
-    releasedAt: "2024-12-06",
-    contextWindow: 131_072,
-    maxOutputTokens: 16_384,
-    pricing: {
-      currency: "USD",
-      inputPerMillion: 0.12,
-      outputPerMillion: 0.3,
-    },
-    status: "available",
-  },
-  {
-    id: "xingchen-agi/xing4.0-29b-a4b:free",
-    provider: "openrouter",
-    name: "Qwen3 235B A22B (OpenRouter)",
-    description:
-      "Qwen3 235B A22B via OpenRouter para raciocínio e tarefas gerais.",
-    releasedAt: "2025-04-29",
-    contextWindow: 131_072,
-    maxOutputTokens: 16_384,
-    pricing: {
-      currency: "USD",
-      inputPerMillion: 0.13,
-      outputPerMillion: 0.6,
+      inputPerMillion: 0,
+      outputPerMillion: 0,
     },
     status: "available",
   },

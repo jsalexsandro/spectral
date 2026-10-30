@@ -36,6 +36,13 @@
       "when": 1793301111806,
       "tag": "0004_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793330743952,
+      "tag": "0005_message_prompt_version",
+      "breakpoints": true
     }
   ]
 }

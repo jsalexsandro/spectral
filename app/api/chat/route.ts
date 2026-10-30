@@ -1,11 +1,13 @@
 import {
   convertToModelMessages,
   createUIMessageStreamResponse,
+  isStepCount,
   safeValidateUIMessages,
   streamText,
   toUIMessageStream,
   type UIMessage,
 } from "ai"
+import { createId } from "@paralleldrive/cuid2"
 import { auth } from "@/auth"
 import { resolveChatModel } from "@/lib/ai/chat-model"
 import {
@@ -16,6 +18,8 @@ import {
   touchChat,
 } from "@/lib/ai/chat-service"
 import { parseModelKey } from "@/lib/ai/models"
+import { buildSystemPrompt } from "@/lib/ai/prompts"
+import { getChatTools } from "@/lib/ai/tools"
 import { sendChatMessageSchema } from "@/lib/validations/chat"
 
 const modelErrorStatus = {
@@ -116,8 +120,23 @@ export async function POST(request: Request) {
       parts: userMessage.parts,
     })
 
+    const systemPrompt = buildSystemPrompt({
+      user: {
+        name: session.user.name,
+        nickname: session.user.nickname,
+      },
+      now: new Date(),
+      model: {
+        provider: modelKey.provider,
+        modelId: modelKey.modelId,
+      },
+    })
+
     const result = streamText({
       model: resolved.model,
+      system: systemPrompt.prompt,
+      tools: getChatTools(),
+      stopWhen: isStepCount(4),
       messages: await convertToModelMessages(
         messages.map((message) => ({
           role: message.role,
@@ -129,6 +148,7 @@ export async function POST(request: Request) {
     const stream = toUIMessageStream({
       stream: result.stream,
       originalMessages: messages,
+      generateMessageId: () => createId(),
       onError: () => "Não foi possível gerar a resposta.",
       onEnd: async ({ responseMessage }) => {
         try {
@@ -147,12 +167,13 @@ export async function POST(request: Request) {
             parts: responseMessage.parts,
             provider: modelKey.provider,
             modelId: modelKey.modelId,
+            promptVersion: systemPrompt.version,
             inputTokens: usage.inputTokens ?? null,
             outputTokens: usage.outputTokens ?? null,
           })
           await touchChat(chatId)
-        } catch {
-          return
+        } catch (error) {
+          console.error("Falha ao salvar resposta do assistente:", error)
         }
       },
     })

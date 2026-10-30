@@ -83,6 +83,7 @@ Mensagem persistida de uma conversa.
 - `parts` (jsonb, not null) - Partes completas do `UIMessage` (`UIMessagePart[]`), preservando texto, raciocínio, ferramentas etc.
 - `provider` (text, nullable) - Provedor do modelo que gerou a resposta (`assistant`)
 - `model` (text, nullable) - ID do modelo que gerou a resposta (`assistant`)
+- `promptVersion` (integer, nullable) - Versão do system prompt (`SYSTEM_PROMPT_VERSION`) usada na resposta (`assistant`)
 - `inputTokens` (integer, nullable) - Tokens de entrada reportados pelo provedor
 - `outputTokens` (integer, nullable) - Tokens de saída reportados pelo provedor
 - `createdAt` (timestamp, not null) - Default: now()
@@ -104,6 +105,7 @@ Para verificação de email/magic links.
 - `0002_ai_key` — cria a tabela `AIKey` (chaves BYOK por usuário).
 - `0003_instant_model` — cria a tabela `InstantModel` (preferências de modelos rápidos por usuário).
 - `0004_chat` — cria o enum `MessageRole` e as tabelas `Chat` e `Message`.
+- `0005_message_prompt_version` — adiciona a coluna `promptVersion` em `Message`.
 
 Aplicar com:
 

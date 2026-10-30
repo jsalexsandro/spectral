@@ -50,6 +50,7 @@ export const chatMessages = pgTable(
     parts: jsonb("parts").$type<UIMessage["parts"]>().notNull(),
     provider: text("provider"),
     model: text("model"),
+    promptVersion: integer("promptVersion"),
     inputTokens: integer("inputTokens"),
     outputTokens: integer("outputTokens"),
     createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),

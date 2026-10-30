@@ -156,23 +156,79 @@ Passo 4 (o basico do funcionamento dos chats)
 - 3. O usuario escolhe qual modelo de ia, ele vai utilizar. esses modelos estão listados SelectModelComponent
      Deve está disponiveis apenas o chats que foram previamente marcado na pagina de (InstantModel)
 
-  (bug econtrado apenas a primeira respota da ia ta salva, as demais não aparece)
-  (demais modelos not-working apenas o google adicionado pelo proprio user)
-
   MyChatsComponents (gestão dos chats)
-  icone de 3 pontos na direita:
-  1. Renomear (o nome vira input o user escrever e é salvo automaticamente )
-  2. Excluir (modal de confirmação)
+  (corrija isso abaixo:)
+  icone de 3 pontos na direita: (icode "...")
 
+  1. Renomear (o nome vira um input, o user escreve deve ser salvo automaticamente )
+  2. Excluir (modal de confirmação)
   ao clicar nesse component ele deve se comrportar assim na url: /chat/[uuid], mantendo o layout padrão do site, mudar apenas url
 
-passo 5
-tools e system prompt
-agentic loop
 
-ui generative
-ex: quero adicionar um novo modelo, ai com ui generativa ele vai abrir um tela para vc escolher o modelo, caso eu passo o model ele nem abre a janela, faz direto.
+Passo 5:
+- System prompt básico (definição do sistema de prompts internos)
+  Isso deve ser bem construido pois com a evolução do sistema, os system prompts vão evoluindo para se adequar ao user!!
+  #### System prompt v2 (`SYSTEM_PROMPT_VERSION = 2`)
 
-ex: quero configurar um novo provedor, ele vai abrir um tela pra você colocar o provedor, ai depois abre mais uma pedindo a key. ele salva e da um feedback
+  Referências:
+  - Composição: `lib/ai/prompts/build.ts` (`buildSystemPrompt`)
+  - Seções: `lib/ai/prompts/sections/` (identidade, estilo, capacidades, segurança, contexto do usuário)
+  - Versão e changelog: `lib/ai/prompts/registry.ts`
+  - Injeção: `app/api/chat/route.ts`
+  - Persistência: `Message.promptVersion`
+  - Revisão do prompt composto: `npm run prompt:print`
+  
+  Regras de evolução:
+  - Mudou o texto de qualquer seção → incrementar `SYSTEM_PROMPT_VERSION` e registrar em `systemPromptChangelog`.
+  - Adicionar personalização por usuário → criar nova seção (ou ampliar `PromptContext`), nunca editar o prompt já versionado sem subir a versão.
+  - `Message.promptVersion` registra qual versão gerou cada resposta do assistente.
 
-ui generativa
+- Tools nativas
+  Isso deve ser feita de maneira profissional pois um dos diferencias da IA é as tools nativas
+
+  - [x] Camada de tools em `lib/ai/tools/` com registro `getChatTools()`
+
+  - [x] Proteções: timeout, limite de resposta, bloqueio de localhost/IPs privados e revalidação de redirects (SSRF)
+  - [x] Multi-step no `/api/chat` (`isStepCount(4)`)
+  - [x] Renderização das tool parts no chat (`components/chat/chat.tsx`)
+  - [x] System prompt v2 anuncia a tool e orienta citação da fonte e limites
+
+
+  todas tools:
+    - [x] Tool nativa: Requisição de api [fetch] (`fetchUrl`, GET/POST)
+    - [x] Formatação nativa das respostas em markdown (`components/chat/markdown-message.tsx`, `react-markdown` + `remark-gfm`)
+
+
+Passo 7 — Generative UI
+Aqui começa uma das funcionalidades mais interessantes do Spectral.
+
+Criar uma camada de componentes dinâmicos que podem ser apresentados pela IA dentro da conversa.
+
+Sugestão de implementação:
+- [ ] Criar components/ai-ui/.
+- [ ] Criar registro de componentes permitidos.
+- [ ] Criar mecanismo de identificação das chamadas de UI.
+- [ ] Criar renderizador de componentes.
+- [ ] Implementar estados: loading, success, error e waiting.
+- [ ] Persistir os dados necessários para recuperar as interfaces no histórico.
+
+
+  
+
+### Passo 40 (futuro): configurações personalizadas de prompt
+
+Adicionar uma seção **Prompt** no `ConfigComponent` (junto de Geral, Conta e Byok) para o usuário
+personalizar o comportamento do assistente. O prompt deixa de ser apenas interno e passa a ter
+uma camada de preferências por usuário.
+
+- [ ] Nova seção "Prompt" no `ConfigComponent` com auto-save
+- [ ] Preferências: tom (neutro/amigável/técnico), verbosidade (curto/equilibrado/detalhado),
+      idioma de resposta e um campo de instruções personalizadas (texto livre)
+- [ ] Persistir por usuário (ex.: tabela `PromptPreference` ou coluna jsonb em `user`) e documentar em `specs/schema.md`
+- [ ] Ampliar `PromptContext` e criar seções condicionais em `lib/ai/prompts/sections/` que só entram quando houver preferência
+- [ ] Manter o prompt base sempre acima das preferências (preferências não podem remover segurança/limites)
+- [ ] Incrementar `SYSTEM_PROMPT_VERSION` ao introduzir a composição com preferências
+- [ ] Rotas `GET/PUT /api/prompt-preferences` com validação Zod
+- [ ] `Message.promptVersion` + hash/registro das preferências aplicadas para rastreabilidade
+
+  
